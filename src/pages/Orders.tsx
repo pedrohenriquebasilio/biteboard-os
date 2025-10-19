@@ -15,6 +15,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type OrderStatus = "new" | "preparing" | "ready" | "delivered";
 
@@ -46,6 +56,11 @@ function SortableOrderCard({ order }: { order: Order }) {
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [pendingMove, setPendingMove] = useState<{
+    orderId: string;
+    newStatus: OrderStatus;
+    order: Order;
+  } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -72,6 +87,15 @@ export default function Orders() {
     const order = orders.find((o) => o.id === orderId);
     if (!order || order.status === newStatus) return;
 
+    // Show confirmation dialog
+    setPendingMove({ orderId, newStatus, order });
+  };
+
+  const confirmMove = () => {
+    if (!pendingMove) return;
+
+    const { orderId, newStatus, order } = pendingMove;
+
     // Update order status
     const updatedOrders = orders.map((o) =>
       o.id === orderId ? { ...o, status: newStatus, updatedAt: new Date() } : o
@@ -89,6 +113,12 @@ export default function Orders() {
       title: "Status atualizado!",
       description: `Pedido de ${order.customerName} movido para ${statusColumns.find((s) => s.id === newStatus)?.title}. Cliente notificado via WhatsApp.`,
     });
+
+    setPendingMove(null);
+  };
+
+  const cancelMove = () => {
+    setPendingMove(null);
   };
 
   const getOrdersByStatus = (status: OrderStatus) => {
@@ -145,6 +175,21 @@ export default function Orders() {
       <DragOverlay>
         {activeOrder ? <OrderCard order={activeOrder} /> : null}
       </DragOverlay>
+
+      <AlertDialog open={!!pendingMove} onOpenChange={(open) => !open && cancelMove()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar mudança de status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja realmente confirmar o pedido para "{statusColumns.find((s) => s.id === pendingMove?.newStatus)?.title}"?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelMove}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmMove}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DndContext>
   );
 }
