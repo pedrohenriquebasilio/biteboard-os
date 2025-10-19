@@ -7,6 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  useDroppable,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Order, mockOrders } from "@/lib/mockData";
@@ -53,6 +54,31 @@ function SortableOrderCard({ order }: { order: Order }) {
   );
 }
 
+function DroppableColumn({ 
+  column, 
+  children 
+}: { 
+  column: { id: OrderStatus; title: string; color: string };
+  children: React.ReactNode;
+}) {
+  const { setNodeRef } = useDroppable({
+    id: column.id,
+  });
+
+  return (
+    <Card ref={setNodeRef} className={`border-t-4 ${column.color}`}>
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center justify-between">
+          {column.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {children}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
@@ -82,7 +108,22 @@ export default function Orders() {
     if (!over) return;
 
     const orderId = active.id as string;
-    const newStatus = over.id as OrderStatus;
+    
+    // Check if dropped over a column or another order
+    let newStatus: OrderStatus | null = null;
+    
+    // Check if it's a column ID
+    if (statusColumns.some(col => col.id === over.id)) {
+      newStatus = over.id as OrderStatus;
+    } else {
+      // Find the order and get its status
+      const targetOrder = orders.find((o) => o.id === over.id);
+      if (targetOrder) {
+        newStatus = targetOrder.status;
+      }
+    }
+
+    if (!newStatus) return;
 
     const order = orders.find((o) => o.id === orderId);
     if (!order || order.status === newStatus) return;
@@ -139,34 +180,28 @@ export default function Orders() {
           {statusColumns.map((column) => {
             const columnOrders = getOrdersByStatus(column.id);
             return (
-              <Card key={column.id} className={`border-t-4 ${column.color}`}>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    {column.title}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {columnOrders.length}
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <SortableContext
-                    id={column.id}
-                    items={columnOrders.map((o) => o.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="space-y-3 min-h-[400px]">
-                      {columnOrders.map((order) => (
-                        <SortableOrderCard key={order.id} order={order} />
-                      ))}
-                      {columnOrders.length === 0 && (
-                        <div className="flex items-center justify-center h-40 text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg">
-                          Nenhum pedido
-                        </div>
-                      )}
-                    </div>
-                  </SortableContext>
-                </CardContent>
-              </Card>
+              <DroppableColumn key={column.id} column={column}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {columnOrders.length} {columnOrders.length === 1 ? 'pedido' : 'pedidos'}
+                  </span>
+                </div>
+                <SortableContext
+                  items={columnOrders.map((o) => o.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3 min-h-[400px]">
+                    {columnOrders.map((order) => (
+                      <SortableOrderCard key={order.id} order={order} />
+                    ))}
+                    {columnOrders.length === 0 && (
+                      <div className="flex items-center justify-center h-40 text-sm text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                        Nenhum pedido
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              </DroppableColumn>
             );
           })}
         </div>
