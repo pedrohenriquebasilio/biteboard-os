@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { mockConversations, mockMessages, Conversation, Message } from "@/lib/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Send, Phone } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { getConversations, getConversationMessages, sendMessage } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 export default function Conversations() {
-  const [conversations] = useState<Conversation[]>(mockConversations);
+  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(
     mockConversations[0]
   );
@@ -17,15 +19,56 @@ export default function Conversations() {
   );
   const [newMessage, setNewMessage] = useState("");
 
-  const handleSelectConversation = (conversation: Conversation) => {
+  useEffect(() => {
+    const fetchConversations = async () => {
+      const response = await getConversations('active');
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível carregar conversas",
+          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      } else if (response.data) {
+        setConversations(response.data as Conversation[]);
+      }
+    };
+
+    fetchConversations();
+  }, []);
+
+  const handleSelectConversation = async (conversation: Conversation) => {
     setSelectedConversation(conversation);
-    setMessages(mockMessages[conversation.id] || []);
+    
+    const response = await getConversationMessages(conversation.id);
+    
+    if (response.error) {
+      toast({
+        title: "Não foi possível carregar mensagens",
+        description: "Usando dados de exemplo. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+      setMessages(mockMessages[conversation.id] || []);
+    } else if (response.data) {
+      setMessages(response.data as Message[]);
+    }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
-    const message: Message = {
+    const response = await sendMessage(selectedConversation.id, newMessage);
+    
+    if (response.error) {
+      toast({
+        title: "Não foi possível enviar mensagem",
+        description: "API não disponível. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const message: Message = (response.data as Message) || {
       id: Date.now().toString(),
       conversationId: selectedConversation.id,
       text: newMessage,
@@ -36,13 +79,6 @@ export default function Conversations() {
 
     setMessages([...messages, message]);
     setNewMessage("");
-
-    // TODO: API call to send message
-    // await fetch(`/api/v1/conversations/${selectedConversation.id}/messages`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ text: newMessage })
-    // });
   };
 
   const formatTime = (date: Date) => {

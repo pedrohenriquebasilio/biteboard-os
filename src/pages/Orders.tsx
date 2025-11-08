@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getOrders, updateOrderStatus } from "@/lib/api";
 
 type OrderStatus = "new" | "preparing" | "ready" | "delivered";
 
@@ -88,6 +89,24 @@ export default function Orders() {
     order: Order;
   } | null>(null);
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const response = await getOrders();
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível carregar pedidos",
+          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      } else if (response.data) {
+        setOrders(response.data as Order[]);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -109,14 +128,11 @@ export default function Orders() {
 
     const orderId = active.id as string;
     
-    // Check if dropped over a column or another order
     let newStatus: OrderStatus | null = null;
     
-    // Check if it's a column ID
     if (statusColumns.some(col => col.id === over.id)) {
       newStatus = over.id as OrderStatus;
     } else {
-      // Find the order and get its status
       const targetOrder = orders.find((o) => o.id === over.id);
       if (targetOrder) {
         newStatus = targetOrder.status;
@@ -128,31 +144,34 @@ export default function Orders() {
     const order = orders.find((o) => o.id === orderId);
     if (!order || order.status === newStatus) return;
 
-    // Show confirmation dialog
     setPendingMove({ orderId, newStatus, order });
   };
 
-  const confirmMove = () => {
+  const confirmMove = async () => {
     if (!pendingMove) return;
 
     const { orderId, newStatus, order } = pendingMove;
 
-    // Update order status
+    const response = await updateOrderStatus(orderId, newStatus);
+    
+    if (response.error) {
+      toast({
+        title: "Não foi possível atualizar",
+        description: "API não disponível. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+      setPendingMove(null);
+      return;
+    }
+
     const updatedOrders = orders.map((o) =>
       o.id === orderId ? { ...o, status: newStatus, updatedAt: new Date() } : o
     );
     setOrders(updatedOrders);
 
-    // TODO: API call to update order status
-    // await fetch(`/api/v1/orders/${orderId}/status`, {
-    //   method: 'PATCH',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ status: newStatus })
-    // });
-
     toast({
       title: "Status atualizado!",
-      description: `Pedido de ${order.customerName} movido para ${statusColumns.find((s) => s.id === newStatus)?.title}. Cliente notificado via WhatsApp.`,
+      description: `Pedido de ${order.customerName} movido para ${statusColumns.find((s) => s.id === newStatus)?.title}.`,
     });
 
     setPendingMove(null);

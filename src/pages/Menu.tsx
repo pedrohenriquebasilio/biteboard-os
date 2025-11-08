@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { mockMenuItems, MenuItem } from "@/lib/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { getMenuItems, createMenuItem, updateMenuItem, deleteMenuItem } from "@/lib/api";
 
 const categories = ["Pizzas", "Hambúrgueres", "Saladas", "Japonês", "Acompanhamentos", "Bebidas"];
 
@@ -38,6 +39,24 @@ export default function Menu() {
     category: "",
     available: true,
   });
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      const response = await getMenuItems();
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível carregar cardápio",
+          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      } else if (response.data) {
+        setMenuItems(response.data as MenuItem[]);
+      }
+    };
+
+    fetchMenuItems();
+  }, []);
 
   const handleOpenDialog = (item?: MenuItem) => {
     if (item) {
@@ -56,7 +75,7 @@ export default function Menu() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.category || !formData.price) {
       toast({
         title: "Erro",
@@ -67,7 +86,17 @@ export default function Menu() {
     }
 
     if (editingItem) {
-      // Update existing item
+      const response = await updateMenuItem(editingItem.id, formData);
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível atualizar",
+          description: "API não disponível. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setMenuItems(
         menuItems.map((item) =>
           item.id === editingItem.id ? { ...item, ...formData } : item
@@ -78,8 +107,18 @@ export default function Menu() {
         description: "O item do cardápio foi atualizado com sucesso.",
       });
     } else {
-      // Create new item
-      const newItem: MenuItem = {
+      const response = await createMenuItem(formData);
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível criar",
+          description: "API não disponível. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newItem: MenuItem = (response.data as MenuItem) || {
         id: Date.now().toString(),
         ...formData as MenuItem,
       };
@@ -91,23 +130,25 @@ export default function Menu() {
     }
 
     setIsDialogOpen(false);
-
-    // TODO: API call
-    // await fetch('/api/v1/menu', {
-    //   method: editingItem ? 'PUT' : 'POST',
-    //   body: JSON.stringify(formData)
-    // });
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const response = await deleteMenuItem(id);
+    
+    if (response.error) {
+      toast({
+        title: "Não foi possível remover",
+        description: "API não disponível. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setMenuItems(menuItems.filter((item) => item.id !== id));
     toast({
       title: "Item removido",
       description: "O item foi removido do cardápio.",
     });
-
-    // TODO: API call
-    // await fetch(`/api/v1/menu/${id}`, { method: 'DELETE' });
   };
 
   const groupedItems = menuItems.reduce((acc, item) => {

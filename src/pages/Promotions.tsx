@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { mockPromotions, Promotion } from "@/lib/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Calendar } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { getPromotions, createPromotion, updatePromotion, deletePromotion, togglePromotion } from "@/lib/api";
 
 export default function Promotions() {
   const [promotions, setPromotions] = useState<Promotion[]>(mockPromotions);
@@ -38,6 +39,24 @@ export default function Promotions() {
     validUntil: new Date(),
     active: true,
   });
+
+  useEffect(() => {
+    const fetchPromotions = async () => {
+      const response = await getPromotions();
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível carregar promoções",
+          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      } else if (response.data) {
+        setPromotions(response.data as Promotion[]);
+      }
+    };
+
+    fetchPromotions();
+  }, []);
 
   const handleOpenDialog = (promotion?: Promotion) => {
     if (promotion) {
@@ -58,7 +77,7 @@ export default function Promotions() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.name || !formData.discount) {
       toast({
         title: "Erro",
@@ -69,6 +88,17 @@ export default function Promotions() {
     }
 
     if (editingPromotion) {
+      const response = await updatePromotion(editingPromotion.id, formData);
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível atualizar",
+          description: "API não disponível. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setPromotions(
         promotions.map((promo) =>
           promo.id === editingPromotion.id ? { ...promo, ...formData } : promo
@@ -79,7 +109,18 @@ export default function Promotions() {
         description: "A promoção foi atualizada com sucesso.",
       });
     } else {
-      const newPromotion: Promotion = {
+      const response = await createPromotion(formData);
+      
+      if (response.error) {
+        toast({
+          title: "Não foi possível criar",
+          description: "API não disponível. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const newPromotion: Promotion = (response.data as Promotion) || {
         id: Date.now().toString(),
         ...formData as Promotion,
       };
@@ -91,36 +132,54 @@ export default function Promotions() {
     }
 
     setIsDialogOpen(false);
-
-    // TODO: API call
   };
 
-  const handleToggle = (id: string) => {
+  const handleToggle = async (id: string) => {
+    const promo = promotions.find((p) => p.id === id);
+    if (!promo) return;
+
+    const response = await togglePromotion(id, !promo.active);
+    
+    if (response.error) {
+      toast({
+        title: "Não foi possível atualizar",
+        description: "API não disponível. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setPromotions(
-      promotions.map((promo) =>
-        promo.id === id ? { ...promo, active: !promo.active } : promo
+      promotions.map((p) =>
+        p.id === id ? { ...p, active: !p.active } : p
       )
     );
 
-    const promo = promotions.find((p) => p.id === id);
     toast({
-      title: promo?.active ? "Promoção desativada" : "Promoção ativada",
-      description: promo?.active
+      title: promo.active ? "Promoção desativada" : "Promoção ativada",
+      description: promo.active
         ? "A promoção foi congelada e não será mais oferecida."
         : "A promoção foi ativada e está disponível.",
     });
-
-    // TODO: API call
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const response = await deletePromotion(id);
+    
+    if (response.error) {
+      toast({
+        title: "Não foi possível remover",
+        description: "API não disponível. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setPromotions(promotions.filter((promo) => promo.id !== id));
     toast({
       title: "Promoção removida",
       description: "A promoção foi removida do sistema.",
     });
-
-    // TODO: API call
   };
 
   const formatDate = (date: Date) => {
