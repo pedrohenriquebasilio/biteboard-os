@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { UtensilsCrossed } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { login } from "@/lib/api";
+import { LoginResponse } from "@/lib/types";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,32 +17,43 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast({
+        title: "Erro no login",
+        description: "Por favor, preencha todos os campos.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
-    // TODO: Replace with actual API call
-    // const response = await fetch('/api/v1/auth/login', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ email, password })
-    // });
-
-    // Mock login
-    setTimeout(() => {
-      if (email && password) {
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Redirecionando para o dashboard...",
-        });
-        navigate("/dashboard");
-      } else {
-        toast({
-          title: "Erro no login",
-          description: "Por favor, preencha todos os campos.",
-          variant: "destructive",
-        });
-      }
+    const response = await login(email, password);
+    
+    if (response.error) {
+      toast({
+        title: "Erro no login",
+        description: response.error,
+        variant: "destructive",
+      });
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+
+    if (response.data) {
+      const data = response.data as LoginResponse;
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("tenant_id", data.user.restaurantId);
+      
+      toast({
+        title: "Login realizado com sucesso!",
+        description: "Redirecionando para o dashboard...",
+      });
+      navigate("/dashboard");
+    }
+    
+    setIsLoading(false);
   };
 
   return (

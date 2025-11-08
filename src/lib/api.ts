@@ -2,7 +2,7 @@
  * API Integration Layer
  * 
  * Este arquivo contém todas as funções para integração com o backend.
- * Substitua as implementações mock pelas chamadas reais à API quando o backend estiver pronto.
+ * Todas as requisições incluem autenticação JWT e tenant ID.
  * 
  * Base URL: Defina a URL base da API nas variáveis de ambiente
  */

@@ -1,38 +1,51 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, DollarSign, MessageSquare, Clock } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { mockDashboardStats, mockRevenueData, mockOrders } from "@/lib/mockData";
+import { useEffect, useState } from "react";
+import { getDashboardStats, getRevenueData, getOrders } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
+import { DashboardStats, RevenueData } from "@/lib/types";
 
 export default function Dashboard() {
-  const stats = mockDashboardStats;
-  const recentOrders = mockOrders.slice(0, 5);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const statCards = [
-    {
-      title: "Pedidos Hoje",
-      value: stats.todayOrders,
-      icon: Package,
-      description: `${stats.activeOrders} ativos`
-    },
-    {
-      title: "Faturamento Hoje",
-      value: `R$ ${stats.todayRevenue.toFixed(2)}`,
-      icon: DollarSign,
-      description: "Meta: R$ 2.000,00"
-    },
-    {
-      title: "Conversas Ativas",
-      value: stats.activeConversations,
-      icon: MessageSquare,
-      description: "WhatsApp conectado"
-    },
-    {
-      title: "Em Preparo",
-      value: stats.ordersInProgress,
-      icon: Clock,
-      description: `${stats.ordersReady} prontos`
-    }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      
+      const [statsResponse, revenueResponse, ordersResponse] = await Promise.all([
+        getDashboardStats(),
+        getRevenueData({
+          period: 'daily',
+          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          endDate: new Date().toISOString().split('T')[0]
+        }),
+        getOrders()
+      ]);
+
+      if (statsResponse.error || revenueResponse.error || ordersResponse.error) {
+        toast({
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os dados do dashboard.",
+          variant: "destructive",
+        });
+      }
+
+      if (statsResponse.data) setStats(statsResponse.data as DashboardStats);
+      if (revenueResponse.data) setRevenueData(revenueResponse.data as RevenueData[]);
+      if (ordersResponse.data) {
+        const orders = ordersResponse.data as any[];
+        setRecentOrders(orders.slice(0, 5));
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, []);
 
   const getStatusBadge = (status: string) => {
     const badges = {
@@ -53,6 +66,41 @@ export default function Dashboard() {
     };
     return texts[status as keyof typeof texts];
   };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-96">Carregando...</div>;
+  }
+
+  if (!stats) {
+    return <div className="flex items-center justify-center h-96">Erro ao carregar dados</div>;
+  }
+
+  const statCards = [
+    {
+      title: "Pedidos Hoje",
+      value: stats.todayOrders,
+      icon: Package,
+      description: `${stats.activeOrders} ativos`
+    },
+    {
+      title: "Faturamento Hoje",
+      value: `R$ ${stats.todayRevenue?.toFixed(2) || '0.00'}`,
+      icon: DollarSign,
+      description: "Meta: R$ 2.000,00"
+    },
+    {
+      title: "Conversas Ativas",
+      value: stats.activeConversations,
+      icon: MessageSquare,
+      description: "WhatsApp conectado"
+    },
+    {
+      title: "Em Preparo",
+      value: stats.ordersInProgress,
+      icon: Clock,
+      description: `${stats.ordersReady} prontos`
+    }
+  ];
 
   return (
     <div className="space-y-6">
@@ -84,7 +132,7 @@ export default function Dashboard() {
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockRevenueData}>
+              <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                 <XAxis 
                   dataKey="date" 
@@ -131,13 +179,13 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {order.items.length} {order.items.length === 1 ? 'item' : 'itens'}
+                    {order.items?.length || 0} {order.items?.length === 1 ? 'item' : 'itens'}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">R$ {order.total.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">
-                    {Math.floor((Date.now() - order.createdAt.getTime()) / 60000)} min atrás
+                    {Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000)} min atrás
                   </p>
                 </div>
               </div>
