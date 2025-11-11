@@ -1,25 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, ShoppingBag, Users } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
-import { mockRevenueData } from "@/lib/mockData";
 import { useEffect, useState } from "react";
 import { getFinancialSummary, getRevenueData } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 export default function Financial() {
   const [stats, setStats] = useState<any>({
-    totalRevenue: 15847.50,
-    totalOrders: 234,
-    averageTicket: 67.72,
-    activeCustomers: 156
+    totalRevenue: 0,
+    totalOrders: 0,
+    averageTicket: 0,
+    activeCustomers: 0
   });
-  const [revenueData, setRevenueData] = useState<any[]>(mockRevenueData);
-  const [topItems, setTopItems] = useState<any[]>([
-    { name: "Pizza Margherita", quantity: 45, revenue: 2025.00 },
-    { name: "Hambúrguer Clássico", quantity: 38, revenue: 1330.00 },
-    { name: "Sushi Combinado", quantity: 22, revenue: 1430.00 },
-    { name: "Salada Caesar", quantity: 31, revenue: 868.00 },
-  ]);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [topItems, setTopItems] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,10 +35,13 @@ export default function Financial() {
 
       if (summaryResponse.error || revenueResponse.error) {
         toast({
-          title: "Não foi possível carregar dados financeiros",
-          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          title: "Erro ao carregar dados financeiros",
+          description: "Não foi possível conectar à API. Tente novamente mais tarde.",
           variant: "destructive",
         });
+        setStats({ totalRevenue: 0, totalOrders: 0, averageTicket: 0, activeCustomers: 0 });
+        setRevenueData([]);
+        setTopItems([]);
       }
 
       if (summaryResponse.data) {

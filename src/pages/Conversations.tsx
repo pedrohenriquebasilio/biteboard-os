@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { mockConversations, mockMessages, Conversation, Message } from "@/lib/mockData";
+import { Conversation, Message } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,9 @@ import { getConversations, getConversationMessages, sendMessage } from "@/lib/ap
 import { toast } from "@/hooks/use-toast";
 
 export default function Conversations() {
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(
-    mockConversations[0]
-  );
-  const [messages, setMessages] = useState<Message[]>(
-    mockMessages[mockConversations[0].id] || []
-  );
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
   useEffect(() => {
@@ -25,10 +21,11 @@ export default function Conversations() {
       
       if (response.error) {
         toast({
-          title: "Não foi possível carregar conversas",
-          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          title: "Erro ao carregar conversas",
+          description: "Não foi possível conectar à API. Tente novamente mais tarde.",
           variant: "destructive",
         });
+        setConversations([]);
       } else if (response.data) {
         setConversations(response.data as Conversation[]);
       }
@@ -44,11 +41,11 @@ export default function Conversations() {
     
     if (response.error) {
       toast({
-        title: "Não foi possível carregar mensagens",
-        description: "Usando dados de exemplo. Tente novamente mais tarde.",
+        title: "Erro ao carregar mensagens",
+        description: "Não foi possível conectar à API. Tente novamente mais tarde.",
         variant: "destructive",
       });
-      setMessages(mockMessages[conversation.id] || []);
+      setMessages([]);
     } else if (response.data) {
       setMessages(response.data as Message[]);
     }

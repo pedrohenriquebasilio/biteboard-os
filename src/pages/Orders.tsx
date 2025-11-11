@@ -10,7 +10,7 @@ import {
   useDroppable,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Order, mockOrders } from "@/lib/mockData";
+import { Order } from "@/lib/types";
 import { OrderCard } from "@/components/Orders/OrderCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
@@ -81,7 +81,7 @@ function DroppableColumn({
 }
 
 export default function Orders() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
   const [pendingMove, setPendingMove] = useState<{
     orderId: string;
@@ -95,10 +95,11 @@ export default function Orders() {
       
       if (response.error) {
         toast({
-          title: "Não foi possível carregar pedidos",
-          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          title: "Erro ao carregar pedidos",
+          description: "Não foi possível conectar à API. Tente novamente mais tarde.",
           variant: "destructive",
         });
+        setOrders([]);
       } else if (response.data) {
         setOrders(response.data as Order[]);
       }

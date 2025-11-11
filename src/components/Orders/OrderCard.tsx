@@ -1,4 +1,4 @@
-import { Order } from "@/lib/mockData";
+import { Order } from "@/lib/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Clock, Phone } from "lucide-react";
 
@@ -28,8 +28,8 @@ export function OrderCard({ order }: OrderCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-2">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex justify-between text-sm">
+          {order.items.map((item, index) => (
+            <div key={index} className="flex justify-between text-sm">
               <span>
                 {item.quantity}x {item.name}
               </span>

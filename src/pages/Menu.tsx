@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { mockMenuItems, MenuItem } from "@/lib/mockData";
+import { MenuItem } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ import { getMenuItems, createMenuItem, updateMenuItem, deleteMenuItem } from "@/
 const categories = ["Pizzas", "Hambúrgueres", "Saladas", "Japonês", "Acompanhamentos", "Bebidas"];
 
 export default function Menu() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [formData, setFormData] = useState<Partial<MenuItem>>({
@@ -46,10 +46,11 @@ export default function Menu() {
       
       if (response.error) {
         toast({
-          title: "Não foi possível carregar cardápio",
-          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          title: "Erro ao carregar cardápio",
+          description: "Não foi possível conectar à API. Tente novamente mais tarde.",
           variant: "destructive",
         });
+        setMenuItems([]);
       } else if (response.data) {
         setMenuItems(response.data as MenuItem[]);
       }

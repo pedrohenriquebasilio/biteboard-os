@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { mockPromotions, Promotion } from "@/lib/mockData";
+import { Promotion } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +27,7 @@ import { toast } from "@/hooks/use-toast";
 import { getPromotions, createPromotion, updatePromotion, deletePromotion, togglePromotion } from "@/lib/api";
 
 export default function Promotions() {
-  const [promotions, setPromotions] = useState<Promotion[]>(mockPromotions);
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [formData, setFormData] = useState<Partial<Promotion>>({
@@ -46,10 +46,11 @@ export default function Promotions() {
       
       if (response.error) {
         toast({
-          title: "Não foi possível carregar promoções",
-          description: "Usando dados de exemplo. Tente novamente mais tarde.",
+          title: "Erro ao carregar promoções",
+          description: "Não foi possível conectar à API. Tente novamente mais tarde.",
           variant: "destructive",
         });
+        setPromotions([]);
       } else if (response.data) {
         setPromotions(response.data as Promotion[]);
       }
