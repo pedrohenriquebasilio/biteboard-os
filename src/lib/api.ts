@@ -21,6 +21,11 @@ async function apiRequest<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<ApiResponse<T>> {
+  const fullUrl = `${API_BASE_URL}${endpoint}`;
+  console.log('🔵 [API Request] Starting request to:', fullUrl);
+  console.log('🔵 [API Request] Method:', options?.method || 'GET');
+  console.log('🔵 [API Request] Body:', options?.body);
+  
   try {
     const token = localStorage.getItem('auth_token');
     const tenantId = localStorage.getItem('tenant_id');
@@ -32,20 +37,49 @@ async function apiRequest<T>(
       ...options?.headers,
     };
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    console.log('🔵 [API Request] Headers:', headers);
+
+    const response = await fetch(fullUrl, {
       ...options,
       headers,
     });
 
-    const data = await response.json();
+    console.log('🟢 [API Response] Status:', response.status, response.statusText);
+    
+    const contentType = response.headers.get('content-type');
+    console.log('🟢 [API Response] Content-Type:', contentType);
+    
+    let data;
+    if (contentType && contentType.includes('application/json')) {
+      data = await response.json();
+      console.log('🟢 [API Response] Data:', data);
+    } else {
+      const text = await response.text();
+      console.log('🟢 [API Response] Text:', text);
+      data = { message: text };
+    }
 
     if (!response.ok) {
-      throw new Error(data.error || 'Erro na requisição');
+      const errorMessage = data.error || data.message || 'Erro na requisição';
+      console.error('🔴 [API Error] Response not OK:', errorMessage);
+      throw new Error(errorMessage);
     }
 
     return { data };
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('🔴 [API Error] Exception caught:', error);
+    console.error('🔴 [API Error] Error details:', {
+      message: error instanceof Error ? error.message : 'Erro desconhecido',
+      name: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      return { 
+        error: `Erro de conexão: Não foi possível conectar ao servidor em ${API_BASE_URL}. Verifique se o backend está rodando.` 
+      };
+    }
+    
     return { error: error instanceof Error ? error.message : 'Erro desconhecido' };
   }
 }
