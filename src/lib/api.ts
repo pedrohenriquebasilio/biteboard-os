@@ -60,7 +60,7 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(data: {
-  restaurantName: string;
+  name: string;
   email: string;
   password: string;
   phone: string;
@@ -79,10 +79,12 @@ export async function getDashboardStats() {
 
 export async function getRevenueData(params: {
   period: 'daily' | 'weekly' | 'monthly';
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
 }) {
-  const queryParams = new URLSearchParams(params).toString();
+  const queryParams = new URLSearchParams(
+    Object.entries(params).filter(([_, v]) => v !== undefined) as [string, string][]
+  ).toString();
   return apiRequest(`/dashboard/revenue?${queryParams}`);
 }
 
@@ -90,9 +92,13 @@ export async function getRevenueData(params: {
 
 export async function getOrders(filters?: {
   status?: string;
-  date?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  customerPhone?: string;
 }) {
-  const queryParams = filters ? new URLSearchParams(filters).toString() : '';
+  const queryParams = filters 
+    ? new URLSearchParams(Object.entries(filters).filter(([_, v]) => v !== undefined) as [string, string][]).toString() 
+    : '';
   return apiRequest(`/orders${queryParams ? `?${queryParams}` : ''}`);
 }
 
@@ -105,17 +111,30 @@ export async function updateOrderStatus(orderId: string, status: string) {
 
 // ============= CONVERSATIONS =============
 
-export async function getConversations(status?: 'active' | 'closed') {
-  const queryParams = status ? `?status=${status}` : '';
-  return apiRequest(`/conversations${queryParams}`);
+export async function getConversations(params?: {
+  status?: 'active' | 'closed';
+  page?: number;
+  limit?: number;
+}) {
+  const queryParams = params 
+    ? new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
+    : '';
+  return apiRequest(`/conversations${queryParams ? `?${queryParams}` : ''}`);
 }
 
-export async function getConversationMessages(conversationId: string) {
-  return apiRequest(`/conversations/${conversationId}/messages`);
+export async function getConversationMessages(phone: string, params?: {
+  limit?: number;
+  before?: string;
+  after?: string;
+}) {
+  const queryParams = params 
+    ? new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()
+    : '';
+  return apiRequest(`/conversations/${encodeURIComponent(phone)}/messages${queryParams ? `?${queryParams}` : ''}`);
 }
 
-export async function sendMessage(conversationId: string, text: string) {
-  return apiRequest(`/conversations/${conversationId}/messages`, {
+export async function sendMessage(phone: string, text: string) {
+  return apiRequest(`/conversations/${encodeURIComponent(phone)}/messages`, {
     method: 'POST',
     body: JSON.stringify({ text }),
   });
@@ -193,10 +212,12 @@ export async function togglePromotion(id: string, active: boolean) {
 
 export async function getFinancialSummary(params: {
   period: 'daily' | 'weekly' | 'monthly';
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
 }) {
-  const queryParams = new URLSearchParams(params).toString();
+  const queryParams = new URLSearchParams(
+    Object.entries(params).filter(([_, v]) => v !== undefined) as [string, string][]
+  ).toString();
   return apiRequest(`/financial/summary?${queryParams}`);
 }
 

@@ -43,8 +43,8 @@ export default function Login() {
 
     if (response.data) {
       const data = response.data as LoginResponse;
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("tenant_id", data.user.restaurantId);
+      localStorage.setItem("auth_token", data.accessToken);
+      localStorage.setItem("tenant_id", data.restaurant.id);
       
       toast({
         title: "Login realizado com sucesso!",
