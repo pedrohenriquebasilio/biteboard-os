@@ -18,7 +18,11 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🔷 [Login] Form submitted');
+    console.log('🔷 [Login] Email:', email);
+    
     if (!email || !password) {
+      console.log('🔴 [Login] Validation failed: missing fields');
       toast({
         title: "Erro no login",
         description: "Por favor, preencha todos os campos.",
@@ -28,10 +32,14 @@ export default function Login() {
     }
 
     setIsLoading(true);
+    console.log('🔷 [Login] Starting login request...');
 
     const response = await login(email, password);
     
+    console.log('🔷 [Login] Response received:', response);
+    
     if (response.error) {
+      console.error('🔴 [Login] Error:', response.error);
       toast({
         title: "Erro no login",
         description: response.error,
@@ -43,6 +51,9 @@ export default function Login() {
 
     if (response.data) {
       const data = response.data as LoginResponse;
+      console.log('🟢 [Login] Success! Token:', data.accessToken?.substring(0, 20) + '...');
+      console.log('🟢 [Login] Restaurant:', data.restaurant);
+      
       localStorage.setItem("auth_token", data.accessToken);
       localStorage.setItem("tenant_id", data.restaurant.id);
       
@@ -50,6 +61,8 @@ export default function Login() {
         title: "Login realizado com sucesso!",
         description: "Redirecionando para o dashboard...",
       });
+      
+      console.log('🟢 [Login] Navigating to dashboard...');
       navigate("/dashboard");
     }
     
