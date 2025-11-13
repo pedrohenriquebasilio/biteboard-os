@@ -17,7 +17,7 @@ export default function Conversations() {
 
   useEffect(() => {
     const fetchConversations = async () => {
-      const response = await getConversations('active');
+      const response = await getConversations({ status: 'active', limit: 50 });
       
       if (response.error) {
         toast({
@@ -27,7 +27,8 @@ export default function Conversations() {
         });
         setConversations([]);
       } else if (response.data) {
-        setConversations(response.data as Conversation[]);
+        const data = response.data as any;
+        setConversations(data.conversations || []);
       }
     };
 
@@ -37,7 +38,7 @@ export default function Conversations() {
   const handleSelectConversation = async (conversation: Conversation) => {
     setSelectedConversation(conversation);
     
-    const response = await getConversationMessages(conversation.customerPhone);
+    const response = await getConversationMessages(conversation.customerPhone, { limit: 100 });
     
     if (response.error) {
       toast({
@@ -47,7 +48,8 @@ export default function Conversations() {
       });
       setMessages([]);
     } else if (response.data) {
-      setMessages(response.data as Message[]);
+      const data = response.data as any;
+      setMessages(data.messages || []);
     }
   };
 

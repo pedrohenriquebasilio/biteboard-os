@@ -49,22 +49,22 @@ export default function Dashboard() {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      new: "status-badge-new",
-      preparing: "status-badge-preparing",
-      ready: "status-badge-ready",
-      delivered: "status-badge-delivered"
+      NEW: "status-badge-new",
+      PREPARING: "status-badge-preparing",
+      READY: "status-badge-ready",
+      DELIVERED: "status-badge-delivered"
     };
-    return badges[status as keyof typeof badges];
+    return badges[status as keyof typeof badges] || "status-badge-new";
   };
 
   const getStatusText = (status: string) => {
     const texts = {
-      new: "Novo",
-      preparing: "Preparando",
-      ready: "Pronto",
-      delivered: "Entregue"
+      NEW: "Novo",
+      PREPARING: "Preparando",
+      READY: "Pronto",
+      DELIVERED: "Entregue"
     };
-    return texts[status as keyof typeof texts];
+    return texts[status as keyof typeof texts] || status;
   };
 
   if (isLoading) {

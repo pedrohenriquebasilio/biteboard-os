@@ -1,10 +1,13 @@
 export interface LoginResponse {
-  token: string;
-  user: {
+  accessToken: string;
+  tokenType: string;
+  expiresIn: string;
+  restaurant: {
     id: string;
     name: string;
     email: string;
-    restaurantId: string;
+    phone: string;
+    createdAt: string;
   };
 }
 
@@ -34,7 +37,7 @@ export interface Order {
   customerPhone: string;
   items: OrderItem[];
   total: number;
-  status: "new" | "preparing" | "ready" | "delivered";
+  status: "NEW" | "PREPARING" | "READY" | "DELIVERED";
   createdAt: Date;
   updatedAt: Date;
   deliveryAddress?: string;
@@ -74,7 +77,7 @@ export interface Promotion {
   name: string;
   description?: string;
   discount: number;
-  discountType: "percentage" | "fixed";
+  discountType: "PERCENTAGE" | "FIXED";
   validFrom: Date;
   validUntil: Date;
   active: boolean;

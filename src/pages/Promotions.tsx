@@ -34,7 +34,7 @@ export default function Promotions() {
     name: "",
     description: "",
     discount: 0,
-    discountType: "percentage",
+    discountType: "PERCENTAGE",
     validFrom: new Date(),
     validUntil: new Date(),
     active: true,
@@ -69,7 +69,7 @@ export default function Promotions() {
         name: "",
         description: "",
         discount: 0,
-        discountType: "percentage",
+        discountType: "PERCENTAGE",
         validFrom: new Date(),
         validUntil: new Date(),
         active: true,
@@ -246,7 +246,7 @@ export default function Promotions() {
                   <Label htmlFor="discountType">Tipo</Label>
                   <Select
                     value={formData.discountType}
-                    onValueChange={(value: "percentage" | "fixed") =>
+                    onValueChange={(value: "PERCENTAGE" | "FIXED") =>
                       setFormData({ ...formData, discountType: value })
                     }
                   >
@@ -254,8 +254,8 @@ export default function Promotions() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="percentage">Porcentagem (%)</SelectItem>
-                      <SelectItem value="fixed">Valor Fixo (R$)</SelectItem>
+                      <SelectItem value="PERCENTAGE">Porcentagem (%)</SelectItem>
+                      <SelectItem value="FIXED">Valor Fixo (R$)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -345,7 +345,7 @@ export default function Promotions() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold text-primary">
-                    {promotion.discountType === "percentage"
+                    {promotion.discountType === "PERCENTAGE"
                       ? `${promotion.discount}%`
                       : `R$ ${promotion.discount.toFixed(2)}`}
                   </span>

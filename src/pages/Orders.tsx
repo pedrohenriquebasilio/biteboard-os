@@ -28,13 +28,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { getOrders, updateOrderStatus } from "@/lib/api";
 
-type OrderStatus = "new" | "preparing" | "ready" | "delivered";
+type OrderStatus = "NEW" | "PREPARING" | "READY" | "DELIVERED";
 
 const statusColumns: { id: OrderStatus; title: string; color: string }[] = [
-  { id: "new", title: "Novos", color: "border-blue-500" },
-  { id: "preparing", title: "Em Preparo", color: "border-yellow-500" },
-  { id: "ready", title: "Prontos", color: "border-green-500" },
-  { id: "delivered", title: "Entregues", color: "border-gray-500" },
+  { id: "NEW", title: "Novos", color: "border-blue-500" },
+  { id: "PREPARING", title: "Em Preparo", color: "border-yellow-500" },
+  { id: "READY", title: "Prontos", color: "border-green-500" },
+  { id: "DELIVERED", title: "Entregues", color: "border-gray-500" },
 ];
 
 function SortableOrderCard({ order }: { order: Order }) {
