@@ -37,7 +37,7 @@ export default function Conversations() {
   const handleSelectConversation = async (conversation: Conversation) => {
     setSelectedConversation(conversation);
     
-    const response = await getConversationMessages(conversation.id);
+    const response = await getConversationMessages(conversation.customerPhone);
     
     if (response.error) {
       toast({
@@ -54,7 +54,7 @@ export default function Conversations() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
-    const response = await sendMessage(selectedConversation.id, newMessage);
+    const response = await sendMessage(selectedConversation.customerPhone, newMessage);
     
     if (response.error) {
       toast({
