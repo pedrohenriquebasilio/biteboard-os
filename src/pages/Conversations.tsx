@@ -8,12 +8,59 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { getConversations, getConversationMessages, sendMessage } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
+import { initWebSocket, onNewMessage, disconnectWebSocket } from "@/lib/websocket";
 
 export default function Conversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    console.log('🔵 [Conversations] Initializing WebSocket...');
+    initWebSocket();
+
+    // Listen for new messages
+    onNewMessage((message) => {
+      console.log('📨 [Conversations] New message via WebSocket:', message);
+      
+      // Update conversations list
+      setConversations(prev => {
+        const updated = prev.map(conv => 
+          conv.customerPhone === message.conversation?.customerPhone
+            ? { 
+                ...conv, 
+                lastMessage: message.text,
+                lastMessageTime: message.timestamp,
+                unreadCount: selectedConversation?.customerPhone === message.conversation?.customerPhone 
+                  ? conv.unreadCount 
+                  : (conv.unreadCount || 0) + 1
+              }
+            : conv
+        );
+        return updated;
+      });
+      
+      // If the message is for the currently selected conversation, add it to messages
+      if (selectedConversation && message.conversation?.customerPhone === selectedConversation.customerPhone) {
+        setMessages(prev => [...prev, message]);
+      }
+
+      // Show toast notification if not in the current conversation
+      if (!selectedConversation || message.conversation?.customerPhone !== selectedConversation.customerPhone) {
+        toast({
+          title: "Nova mensagem",
+          description: `${message.conversation?.customerName || 'Cliente'}: ${message.text}`,
+        });
+      }
+    });
+
+    return () => {
+      console.log('🔵 [Conversations] Cleaning up WebSocket...');
+      disconnectWebSocket();
+    };
+  }, [selectedConversation]);
 
   useEffect(() => {
     const fetchConversations = async () => {
