@@ -171,8 +171,9 @@ export default function Conversations() {
         </CardHeader>
         <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-12rem)]">
-            <div className="space-y-1 p-4">
-              {conversations.map((conversation) => (
+            {conversations.length > 0 ? (
+              <div className="space-y-1 p-4">
+                {conversations.map((conversation) => (
                 <button
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
@@ -204,6 +205,11 @@ export default function Conversations() {
                 </button>
               ))}
             </div>
+            ) : (
+              <div className="p-8 text-center text-muted-foreground">
+                Nenhuma conversa ativa no momento
+              </div>
+            )}
           </ScrollArea>
         </CardContent>
       </Card>
@@ -223,8 +229,9 @@ export default function Conversations() {
             <CardContent className="p-0 flex flex-col h-[calc(100vh-16rem)]">
               {/* Messages Area */}
               <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4">
-                  {messages.map((message) => (
+                {messages.length > 0 ? (
+                  <div className="space-y-4">
+                    {messages.map((message) => (
                     <div
                       key={message.id}
                       className={cn(
@@ -257,6 +264,11 @@ export default function Conversations() {
                     </div>
                   ))}
                 </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    Nenhuma mensagem ainda
+                  </div>
+                )}
               </ScrollArea>
 
               {/* Input Area */}

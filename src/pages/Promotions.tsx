@@ -312,9 +312,10 @@ export default function Promotions() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {promotions.map((promotion) => {
-          const expired = isExpired(promotion.validUntil);
-          return (
+        {promotions.length > 0 ? (
+          promotions.map((promotion) => {
+            const expired = isExpired(promotion.validUntil);
+            return (
             <Card key={promotion.id} className={expired ? "opacity-60" : ""}>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -381,7 +382,14 @@ export default function Promotions() {
               </CardContent>
             </Card>
           );
-        })}
+        })
+        ) : (
+          <Card className="md:col-span-2">
+            <CardContent className="py-12 text-center text-muted-foreground">
+              Nenhuma promoção cadastrada. Clique em "Nova Promoção" para adicionar.
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

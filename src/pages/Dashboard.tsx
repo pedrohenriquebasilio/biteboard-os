@@ -124,6 +124,9 @@ export default function Dashboard() {
     },
   ];
 
+  const hasRevenueData = Array.isArray(revenueData) && revenueData.length > 0;
+  const hasOrders = Array.isArray(recentOrders) && recentOrders.length > 0;
+
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
@@ -152,9 +155,10 @@ export default function Dashboard() {
           <CardTitle>Faturamento dos Últimos 7 Dias</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueData}>
+          {hasRevenueData ? (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={revenueData}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   className="stroke-border"
@@ -181,6 +185,11 @@ export default function Dashboard() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Nenhum dado de faturamento disponível
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -190,8 +199,9 @@ export default function Dashboard() {
           <CardTitle>Pedidos Recentes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {recentOrders.map((order) => (
+          {hasOrders ? (
+            <div className="space-y-4">
+              {recentOrders.map((order) => (
               <div
                 key={order.id}
                 className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
@@ -224,6 +234,11 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
+          ) : (
+            <div className="py-8 text-center text-muted-foreground">
+              Nenhum pedido recente
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

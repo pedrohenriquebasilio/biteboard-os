@@ -252,8 +252,9 @@ export default function Menu() {
         </Dialog>
       </div>
 
-      {Object.entries(groupedItems).map(([category, items]) => (
-        <Card key={category}>
+      {Object.keys(groupedItems).length > 0 ? (
+        Object.entries(groupedItems).map(([category, items]) => (
+          <Card key={category}>
           <CardHeader>
             <CardTitle className="text-lg">{category}</CardTitle>
           </CardHeader>
@@ -303,7 +304,14 @@ export default function Menu() {
             </div>
           </CardContent>
         </Card>
-      ))}
+      ))
+      ) : (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Nenhum item no cardápio. Clique em "Novo Item" para adicionar.
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
