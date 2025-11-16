@@ -155,11 +155,20 @@ export default function Conversations() {
     setNewMessage("");
   };
 
-  const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date);
+  const formatTime = (date: Date | string | undefined) => {
+    if (!date) return "--:--";
+    
+    try {
+      const dateObj = typeof date === "string" ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "--:--";
+      
+      return new Intl.DateTimeFormat("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(dateObj);
+    } catch {
+      return "--:--";
+    }
   };
 
   return (
