@@ -6,70 +6,92 @@ import { Button } from "@/components/ui/button";
 import { Send, Phone } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { getConversations, getConversationMessages, sendMessage } from "@/lib/api";
+import {
+  getConversations,
+  getConversationMessages,
+  sendMessage,
+} from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
-import { initWebSocket, onNewMessage, disconnectWebSocket } from "@/lib/websocket";
+import {
+  initWebSocket,
+  onNewMessage,
+  disconnectWebSocket,
+} from "@/lib/websocket";
 
 export default function Conversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
   // Initialize WebSocket connection
   useEffect(() => {
-    console.log('🔵 [Conversations] Initializing WebSocket...');
+    console.log("🔵 [Conversations] Initializing WebSocket...");
     initWebSocket();
 
     // Listen for new messages
     onNewMessage((message) => {
-      console.log('📨 [Conversations] New message via WebSocket:', message);
-      
+      console.log("📨 [Conversations] New message via WebSocket:", message);
+
       // Update conversations list
-      setConversations(prev => {
-        const updated = prev.map(conv => 
+      setConversations((prev) => {
+        const updated = prev.map((conv) =>
           conv.customerPhone === message.conversation?.customerPhone
-            ? { 
-                ...conv, 
+            ? {
+                ...conv,
                 lastMessage: message.text,
                 lastMessageTime: message.timestamp,
-                unreadCount: selectedConversation?.customerPhone === message.conversation?.customerPhone 
-                  ? conv.unreadCount 
-                  : (conv.unreadCount || 0) + 1
+                unreadCount:
+                  selectedConversation?.customerPhone ===
+                  message.conversation?.customerPhone
+                    ? conv.unreadCount
+                    : (conv.unreadCount || 0) + 1,
               }
             : conv
         );
         return updated;
       });
-      
+
       // If the message is for the currently selected conversation, add it to messages
-      if (selectedConversation && message.conversation?.customerPhone === selectedConversation.customerPhone) {
-        setMessages(prev => [...prev, message]);
+      if (
+        selectedConversation &&
+        message.conversation?.customerPhone ===
+          selectedConversation.customerPhone
+      ) {
+        setMessages((prev) => [...prev, message]);
       }
 
       // Show toast notification if not in the current conversation
-      if (!selectedConversation || message.conversation?.customerPhone !== selectedConversation.customerPhone) {
+      if (
+        !selectedConversation ||
+        message.conversation?.customerPhone !==
+          selectedConversation.customerPhone
+      ) {
         toast({
           title: "Nova mensagem",
-          description: `${message.conversation?.customerName || 'Cliente'}: ${message.text}`,
+          description: `${message.conversation?.customerName || "Cliente"}: ${
+            message.text
+          }`,
         });
       }
     });
 
     return () => {
-      console.log('🔵 [Conversations] Cleaning up WebSocket...');
+      console.log("🔵 [Conversations] Cleaning up WebSocket...");
       disconnectWebSocket();
     };
   }, [selectedConversation]);
 
   useEffect(() => {
     const fetchConversations = async () => {
-      const response = await getConversations({ status: 'active', limit: 50 });
-      
+      const response = await getConversations({ status: "active", limit: 50 });
+
       if (response.error) {
         toast({
           title: "Erro ao carregar conversas",
-          description: "Não foi possível conectar à API. Tente novamente mais tarde.",
+          description:
+            "Não foi possível conectar à API. Tente novamente mais tarde.",
           variant: "destructive",
         });
         setConversations([]);
@@ -84,13 +106,16 @@ export default function Conversations() {
 
   const handleSelectConversation = async (conversation: Conversation) => {
     setSelectedConversation(conversation);
-    
-    const response = await getConversationMessages(conversation.customerPhone, { limit: 100 });
-    
+
+    const response = await getConversationMessages(conversation.customerPhone, {
+      limit: 100,
+    });
+
     if (response.error) {
       toast({
         title: "Erro ao carregar mensagens",
-        description: "Não foi possível conectar à API. Tente novamente mais tarde.",
+        description:
+          "Não foi possível conectar à API. Tente novamente mais tarde.",
         variant: "destructive",
       });
       setMessages([]);
@@ -103,8 +128,11 @@ export default function Conversations() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
 
-    const response = await sendMessage(selectedConversation.customerPhone, newMessage);
-    
+    const response = await sendMessage(
+      selectedConversation.customerPhone,
+      newMessage
+    );
+
     if (response.error) {
       toast({
         title: "Não foi possível enviar mensagem",
@@ -201,7 +229,9 @@ export default function Conversations() {
                       key={message.id}
                       className={cn(
                         "flex",
-                        message.sender === "restaurant" ? "justify-end" : "justify-start"
+                        message.sender === "restaurant"
+                          ? "justify-end"
+                          : "justify-start"
                       )}
                     >
                       <div

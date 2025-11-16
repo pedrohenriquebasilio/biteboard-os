@@ -1,6 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, DollarSign, MessageSquare, Clock } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { useEffect, useState } from "react";
 import { getDashboardStats, getRevenueData, getOrders } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
@@ -15,18 +23,25 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      
-      const [statsResponse, revenueResponse, ordersResponse] = await Promise.all([
-        getDashboardStats(),
-        getRevenueData({
-          period: 'daily',
-          startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          endDate: new Date().toISOString().split('T')[0]
-        }),
-        getOrders()
-      ]);
 
-      if (statsResponse.error || revenueResponse.error || ordersResponse.error) {
+      const [statsResponse, revenueResponse, ordersResponse] =
+        await Promise.all([
+          getDashboardStats(),
+          getRevenueData({
+            period: "daily",
+            startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split("T")[0],
+            endDate: new Date().toISOString().split("T")[0],
+          }),
+          getOrders(),
+        ]);
+
+      if (
+        statsResponse.error ||
+        revenueResponse.error ||
+        ordersResponse.error
+      ) {
         toast({
           title: "Erro ao carregar dados",
           description: "Não foi possível carregar os dados do dashboard.",
@@ -35,12 +50,13 @@ export default function Dashboard() {
       }
 
       if (statsResponse.data) setStats(statsResponse.data as DashboardStats);
-      if (revenueResponse.data) setRevenueData(revenueResponse.data as RevenueData[]);
+      if (revenueResponse.data)
+        setRevenueData(revenueResponse.data as RevenueData[]);
       if (ordersResponse.data) {
         const orders = ordersResponse.data as any[];
         setRecentOrders(orders.slice(0, 5));
       }
-      
+
       setIsLoading(false);
     };
 
@@ -52,7 +68,7 @@ export default function Dashboard() {
       NEW: "status-badge-new",
       PREPARING: "status-badge-preparing",
       READY: "status-badge-ready",
-      DELIVERED: "status-badge-delivered"
+      DELIVERED: "status-badge-delivered",
     };
     return badges[status as keyof typeof badges] || "status-badge-new";
   };
@@ -62,17 +78,23 @@ export default function Dashboard() {
       NEW: "Novo",
       PREPARING: "Preparando",
       READY: "Pronto",
-      DELIVERED: "Entregue"
+      DELIVERED: "Entregue",
     };
     return texts[status as keyof typeof texts] || status;
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-96">Carregando...</div>;
+    return (
+      <div className="flex items-center justify-center h-96">Carregando...</div>
+    );
   }
 
   if (!stats) {
-    return <div className="flex items-center justify-center h-96">Erro ao carregar dados</div>;
+    return (
+      <div className="flex items-center justify-center h-96">
+        Erro ao carregar dados
+      </div>
+    );
   }
 
   const statCards = [
@@ -80,26 +102,26 @@ export default function Dashboard() {
       title: "Pedidos Hoje",
       value: stats.todayOrders,
       icon: Package,
-      description: `${stats.activeOrders} ativos`
+      description: `${stats.activeOrders} ativos`,
     },
     {
       title: "Faturamento Hoje",
-      value: `R$ ${stats.todayRevenue?.toFixed(2) || '0.00'}`,
+      value: `R$ ${stats.todayRevenue?.toFixed(2) || "0.00"}`,
       icon: DollarSign,
-      description: "Meta: R$ 2.000,00"
+      description: "Meta: R$ 2.000,00",
     },
     {
       title: "Conversas Ativas",
       value: stats.activeConversations,
       icon: MessageSquare,
-      description: "WhatsApp conectado"
+      description: "WhatsApp conectado",
     },
     {
       title: "Em Preparo",
       value: stats.ordersInProgress,
       icon: Clock,
-      description: `${stats.ordersReady} prontos`
-    }
+      description: `${stats.ordersReady} prontos`,
+    },
   ];
 
   return (
@@ -133,25 +155,28 @@ export default function Dashboard() {
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis 
-                  dataKey="date" 
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                />
+                <XAxis
+                  dataKey="date"
                   className="text-xs text-muted-foreground"
                 />
                 <YAxis className="text-xs text-muted-foreground" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: "8px",
                   }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="hsl(var(--primary))" 
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="hsl(var(--primary))"
                   strokeWidth={2}
-                  dot={{ fill: 'hsl(var(--primary))' }}
+                  dot={{ fill: "hsl(var(--primary))" }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -174,18 +199,26 @@ export default function Dashboard() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <p className="font-medium">{order.customerName}</p>
-                    <span className={`px-2 py-1 rounded-full text-xs border ${getStatusBadge(order.status)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs border ${getStatusBadge(
+                        order.status
+                      )}`}
+                    >
                       {getStatusText(order.status)}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {order.items?.length || 0} {order.items?.length === 1 ? 'item' : 'itens'}
+                    {order.items?.length || 0}{" "}
+                    {order.items?.length === 1 ? "item" : "itens"}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">R$ {order.total.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">
-                    {Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000)} min atrás
+                    {Math.floor(
+                      (Date.now() - new Date(order.createdAt).getTime()) / 60000
+                    )}{" "}
+                    min atrás
                   </p>
                 </div>
               </div>
