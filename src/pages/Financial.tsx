@@ -63,6 +63,9 @@ export default function Financial() {
     fetchData();
   }, []);
 
+  const hasRevenueData = Array.isArray(revenueData) && revenueData.length > 0;
+  const hasTopItems = Array.isArray(topItems) && topItems.length > 0;
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Relatório Financeiro</h1>
@@ -122,11 +125,12 @@ export default function Financial() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Evolução do Faturamento</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Evolução do Faturamento</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hasRevenueData ? (
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revenueData}>
@@ -135,17 +139,23 @@ export default function Financial() {
                   <YAxis className="text-xs" />
                   <Tooltip />
                   <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Nenhum dado de faturamento disponível
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Itens Mais Vendidos</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Itens Mais Vendidos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {hasTopItems ? (
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topItems}>
@@ -157,9 +167,14 @@ export default function Financial() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              Nenhum item vendido no período
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
     </div>
   );
 }
