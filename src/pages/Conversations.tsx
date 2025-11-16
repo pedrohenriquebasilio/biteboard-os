@@ -15,7 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   initWebSocket,
   onNewMessage,
-  disconnectWebSocket,
+  removeListener,
 } from "@/lib/websocket";
 
 export default function Conversations() {
@@ -78,8 +78,8 @@ export default function Conversations() {
     });
 
     return () => {
-      console.log("🔵 [Conversations] Cleaning up WebSocket...");
-      disconnectWebSocket();
+      console.log("🔵 [Conversations] Removing WebSocket message listener...");
+      removeListener("message:new");
     };
   }, [selectedConversation]);
 
