@@ -8,9 +8,8 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    // allow connections from any external host (development only)
-    // WARNING: this permits any host to access the dev server. Use only in trusted networks.
-    allowedHosts: "all",
+    // permite qualquer host externo (desenvolvimento apenas)
+    allowedHosts: "auto",
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(
     Boolean
