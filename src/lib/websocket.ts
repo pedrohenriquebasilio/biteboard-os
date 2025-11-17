@@ -61,9 +61,11 @@ export const onNewMessage = (callback: (message: any) => void) => {
     return;
   }
   console.log('🔵 [WebSocket] Registering listener for message:new');
-  ws.on('message:new', (data) => {
-    console.log('📨 [WebSocket] New message received:', data);
-    callback(data);
+  ws.on('message:new', (payload) => {
+    console.log('📨 [WebSocket] New message received:', payload);
+    // O payload vem com estrutura { data: {...}, event: "...", timestamp: "..." }
+    // Passamos apenas o data interno para o callback
+    callback(payload.data);
   });
 };
 

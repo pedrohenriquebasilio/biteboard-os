@@ -7,7 +7,17 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order }: OrderCardProps) {
-  const timeElapsed = Math.floor((Date.now() - order.createdAt.getTime()) / 60000);
+  // Normalize createdAt: backend may send a string (ISO) even though types declare Date.
+  // Ensure we have a valid Date before calling getTime(). If invalid, fall back to now.
+  const createdAtDate =
+    order.createdAt instanceof Date
+      ? order.createdAt
+      : new Date(order.createdAt as any);
+  const createdAtMs =
+    createdAtDate instanceof Date && !isNaN(createdAtDate.getTime())
+      ? createdAtDate.getTime()
+      : Date.now();
+  const timeElapsed = Math.floor((Date.now() - createdAtMs) / 60000);
 
   return (
     <Card className="cursor-move hover:shadow-md transition-shadow">

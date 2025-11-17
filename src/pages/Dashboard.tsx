@@ -159,32 +159,32 @@ export default function Dashboard() {
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revenueData}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  className="stroke-border"
-                />
-                <XAxis
-                  dataKey="date"
-                  className="text-xs text-muted-foreground"
-                />
-                <YAxis className="text-xs text-muted-foreground" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px",
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--primary))" }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-border"
+                  />
+                  <XAxis
+                    dataKey="date"
+                    className="text-xs text-muted-foreground"
+                  />
+                  <YAxis className="text-xs text-muted-foreground" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ fill: "hsl(var(--primary))" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
             <div className="h-[300px] flex items-center justify-center text-muted-foreground">
               Nenhum dado de faturamento disponível
@@ -202,38 +202,39 @@ export default function Dashboard() {
           {hasOrders ? (
             <div className="space-y-4">
               {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <p className="font-medium">{order.customerName}</p>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs border ${getStatusBadge(
-                        order.status
-                      )}`}
-                    >
-                      {getStatusText(order.status)}
-                    </span>
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between p-4 rounded-lg border border-border hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <p className="font-medium">{order.customerName}</p>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs border ${getStatusBadge(
+                          order.status
+                        )}`}
+                      >
+                        {getStatusText(order.status)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {order.items?.length || 0}{" "}
+                      {order.items?.length === 1 ? "item" : "itens"}
+                    </p>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {order.items?.length || 0}{" "}
-                    {order.items?.length === 1 ? "item" : "itens"}
-                  </p>
+                  <div className="text-right">
+                    <p className="font-semibold">R$ {order.total.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {Math.floor(
+                        (Date.now() - new Date(order.createdAt).getTime()) /
+                          60000
+                      )}{" "}
+                      min atrás
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold">R$ {order.total.toFixed(2)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {Math.floor(
-                      (Date.now() - new Date(order.createdAt).getTime()) / 60000
-                    )}{" "}
-                    min atrás
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               Nenhum pedido recente

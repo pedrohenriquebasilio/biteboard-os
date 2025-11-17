@@ -57,7 +57,7 @@ export interface Message {
   id: string;
   conversationId: string;
   text: string;
-  sender: "customer" | "restaurant";
+  sender: "customer" | "server";
   timestamp: Date;
   status: "sent" | "delivered" | "read";
 }

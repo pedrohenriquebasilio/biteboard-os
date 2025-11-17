@@ -12,11 +12,7 @@ import {
   sendMessage,
 } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
-import {
-  initWebSocket,
-  onNewMessage,
-  removeListener,
-} from "@/lib/websocket";
+import { initWebSocket, onNewMessage, removeListener } from "@/lib/websocket";
 
 export default function Conversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -129,7 +125,7 @@ export default function Conversations() {
     if (!newMessage.trim() || !selectedConversation) return;
 
     const response = await sendMessage(
-      selectedConversation.customerPhone,
+      selectedConversation.id,
       newMessage
     );
 
@@ -146,7 +142,7 @@ export default function Conversations() {
       id: Date.now().toString(),
       conversationId: selectedConversation.id,
       text: newMessage,
-      sender: "restaurant",
+      sender: "server",
       timestamp: new Date(),
       status: "sent",
     };
@@ -157,11 +153,11 @@ export default function Conversations() {
 
   const formatTime = (date: Date | string | undefined) => {
     if (!date) return "--:--";
-    
+
     try {
       const dateObj = typeof date === "string" ? new Date(date) : date;
       if (isNaN(dateObj.getTime())) return "--:--";
-      
+
       return new Intl.DateTimeFormat("pt-BR", {
         hour: "2-digit",
         minute: "2-digit",
@@ -183,37 +179,37 @@ export default function Conversations() {
             {conversations.length > 0 ? (
               <div className="space-y-1 p-4">
                 {conversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  onClick={() => handleSelectConversation(conversation)}
-                  className={cn(
-                    "w-full text-left p-4 rounded-lg transition-colors",
-                    selectedConversation?.id === conversation.id
-                      ? "bg-primary/10 border-2 border-primary"
-                      : "hover:bg-accent border-2 border-transparent"
-                  )}
-                >
-                  <div className="flex items-start justify-between mb-1">
-                    <p className="font-medium">{conversation.customerName}</p>
-                    {conversation.unreadCount > 0 && (
-                      <span className="px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                        {conversation.unreadCount}
-                      </span>
+                  <button
+                    key={conversation.id}
+                    onClick={() => handleSelectConversation(conversation)}
+                    className={cn(
+                      "w-full text-left p-4 rounded-lg transition-colors",
+                      selectedConversation?.id === conversation.id
+                        ? "bg-primary/10 border-2 border-primary"
+                        : "hover:bg-accent border-2 border-transparent"
                     )}
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                    <Phone className="h-3 w-3" />
-                    <span>{conversation.customerPhone}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-1">
-                    {conversation.lastMessage}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatTime(conversation.lastMessageTime)}
-                  </p>
-                </button>
-              ))}
-            </div>
+                  >
+                    <div className="flex items-start justify-between mb-1">
+                      <p className="font-medium">{conversation.customerName}</p>
+                      {conversation.unreadCount > 0 && (
+                        <span className="px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                          {conversation.unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                      <Phone className="h-3 w-3" />
+                      <span>{conversation.customerPhone}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground line-clamp-1">
+                      {conversation.lastMessage}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatTime(conversation.lastMessageTime)}
+                    </p>
+                  </button>
+                ))}
+              </div>
             ) : (
               <div className="p-8 text-center text-muted-foreground">
                 Nenhuma conversa ativa no momento
@@ -241,38 +237,38 @@ export default function Conversations() {
                 {messages.length > 0 ? (
                   <div className="space-y-4">
                     {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        "flex",
-                        message.sender === "restaurant"
-                          ? "justify-end"
-                          : "justify-start"
-                      )}
-                    >
                       <div
+                        key={message.id}
                         className={cn(
-                          "max-w-[70%] rounded-lg px-4 py-2",
-                          message.sender === "restaurant"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground"
+                          "flex",
+                          message.sender === "server"
+                            ? "justify-end"
+                            : "justify-start"
                         )}
                       >
-                        <p className="text-sm">{message.text}</p>
-                        <p
+                        <div
                           className={cn(
-                            "text-xs mt-1",
-                            message.sender === "restaurant"
-                              ? "text-primary-foreground/70"
-                              : "text-muted-foreground"
+                            "max-w-[70%] rounded-lg px-4 py-2",
+                            message.sender === "server"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-secondary text-secondary-foreground"
                           )}
                         >
-                          {formatTime(message.timestamp)}
-                        </p>
+                          <p className="text-sm">{message.text}</p>
+                          <p
+                            className={cn(
+                              "text-xs mt-1",
+                              message.sender === "server"
+                                ? "text-primary-foreground/70"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            {formatTime(message.timestamp)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
                     Nenhuma mensagem ainda
