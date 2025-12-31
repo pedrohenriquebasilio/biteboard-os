@@ -7,8 +7,6 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order }: OrderCardProps) {
-  // Normalize createdAt: backend may send a string (ISO) even though types declare Date.
-  // Ensure we have a valid Date before calling getTime(). If invalid, fall back to now.
   const createdAtDate =
     order.createdAt instanceof Date
       ? order.createdAt
@@ -20,31 +18,38 @@ export function OrderCard({ order }: OrderCardProps) {
   const timeElapsed = Math.floor((Date.now() - createdAtMs) / 60000);
 
   return (
-    <Card className="cursor-move hover:shadow-md transition-shadow">
+    <Card className="cursor-move hover:shadow-xl hover:scale-[1.02] transition-all duration-300 rounded-2xl h-full">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold">{order.customerName}</h3>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-              <Phone className="h-3 w-3" />
-              <span>{order.customerPhone}</span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold truncate">{order.customerName}</h3>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1 truncate">
+              <Phone className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{order.customerPhone}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground flex-shrink-0">
             <Clock className="h-3 w-3" />
             <span>{timeElapsed} min</span>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="space-y-2">
+        <div className="space-y-1 text-sm max-h-32 overflow-y-auto">
           {order.items.map((item, index) => (
-            <div key={index} className="flex justify-between text-sm">
-              <span>
-                {item.quantity}x {item.name}
-              </span>
-              <span className="text-muted-foreground">
-                R$ {(item.price * item.quantity).toFixed(2)}
+            <div key={index} className="flex justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <span className="truncate">
+                  {item.quantity}x {item.name}
+                </span>
+                {item.notes && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    {item.notes}
+                  </p>
+                )}
+              </div>
+              <span className="text-muted-foreground flex-shrink-0">
+                € {(item.price * item.quantity).toFixed(2)}
               </span>
             </div>
           ))}
@@ -52,7 +57,7 @@ export function OrderCard({ order }: OrderCardProps) {
         <div className="pt-2 border-t border-border">
           <div className="flex justify-between font-semibold">
             <span>Total</span>
-            <span className="text-primary">R$ {order.total.toFixed(2)}</span>
+            <span className="text-primary">€ {order.total.toFixed(2)}</span>
           </div>
         </div>
       </CardContent>

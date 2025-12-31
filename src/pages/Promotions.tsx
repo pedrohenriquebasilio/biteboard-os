@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { Promotion } from "@/lib/types";
+import { Promotion, MenuItem } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { LoadingSpinner } from "@/components/Loading";
 import {
   Dialog,
   DialogContent,
@@ -22,79 +21,174 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Calendar } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Pencil, Trash2, TrendingDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { getPromotions, createPromotion, updatePromotion, deletePromotion, togglePromotion } from "@/lib/api";
+import { 
+  getPromotions, 
+  getMenuItems, 
+  createPromotion, 
+  updatePromotion, 
+  deletePromotion 
+} from "@/lib/api";
 
 export default function Promotions() {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
+  const [deletePromoId, setDeletePromoId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState<Partial<Promotion>>({
-    name: "",
-    description: "",
-    discount: 0,
-    discountType: "PERCENTAGE",
-    validFrom: new Date(),
-    validUntil: new Date(),
-    active: true,
+    menuItemId: "",
+    priceCurrent: 0,
+    validFrom: new Date().toISOString().split("T")[0],
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
   });
 
   useEffect(() => {
-    const fetchPromotions = async () => {
-      const response = await getPromotions();
-      
-      if (response.error) {
-        toast({
-          title: "Erro ao carregar promoções",
-          description: "Não foi possível conectar à API. Tente novamente mais tarde.",
-          variant: "destructive",
-        });
-        setPromotions([]);
-      } else if (response.data) {
-        setPromotions(response.data as Promotion[]);
-      }
-    };
-
     fetchPromotions();
+    fetchMenuItems();
   }, []);
+
+  const fetchPromotions = async () => {
+    setIsLoading(true);
+    const response = await getPromotions();
+    
+    if (response.error) {
+      toast({
+        title: "Erro ao carregar promoções",
+        description: response.error,
+        variant: "destructive",
+      });
+      setPromotions([]);
+    } else if (response.data) {
+      setPromotions(response.data as Promotion[]);
+    }
+    setIsLoading(false);
+  };
+
+  const fetchMenuItems = async () => {
+    const response = await getMenuItems();
+    
+    if (response.error) {
+      toast({
+        title: "Erro ao carregar itens",
+        description: response.error,
+        variant: "destructive",
+      });
+      setMenuItems([]);
+    } else if (response.data) {
+      setMenuItems(response.data as MenuItem[]);
+    }
+  };
 
   const handleOpenDialog = (promotion?: Promotion) => {
     if (promotion) {
       setEditingPromotion(promotion);
-      setFormData(promotion);
+      setFormData({
+        menuItemId: promotion.menuItemId,
+        priceCurrent: promotion.priceCurrent,
+        validFrom: promotion.validFrom.split("T")[0],
+        validUntil: promotion.validUntil.split("T")[0],
+      });
     } else {
       setEditingPromotion(null);
       setFormData({
-        name: "",
-        description: "",
-        discount: 0,
-        discountType: "PERCENTAGE",
-        validFrom: new Date(),
-        validUntil: new Date(),
-        active: true,
+        menuItemId: "",
+        priceCurrent: 0,
+        validFrom: new Date().toISOString().split("T")[0],
+        validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       });
     }
     setIsDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    if (!formData.name || !formData.discount) {
+  const getSelectedItem = () => {
+    return menuItems.find(item => item.id === formData.menuItemId);
+  };
+
+  const validateForm = () => {
+    if (!formData.menuItemId) {
       toast({
         title: "Erro",
-        description: "Por favor, preencha todos os campos obrigatórios.",
+        description: "Por favor, selecione um item do menu.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
+    if (!formData.priceCurrent || formData.priceCurrent <= 0) {
+      toast({
+        title: "Erro",
+        description: "Por favor, defina um preço de promoção válido.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const selectedItem = getSelectedItem();
+    if (selectedItem && formData.priceCurrent >= selectedItem.priceReal) {
+      toast({
+        title: "Erro",
+        description: `O preço de promoção (€ ${formData.priceCurrent.toFixed(2)}) deve ser menor que o preço real (€ ${selectedItem.priceReal.toFixed(2)}).`,
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.validFrom || !formData.validUntil) {
+      toast({
+        title: "Erro",
+        description: "Por favor, defina as datas de validade.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (new Date(formData.validFrom) >= new Date(formData.validUntil)) {
+      toast({
+        title: "Erro",
+        description: "A data de início deve ser anterior à data de fim.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+
+    const payload = {
+      menuItemId: formData.menuItemId!,
+      priceCurrent: formData.priceCurrent!,
+      validFrom: new Date(formData.validFrom!).toISOString(),
+      validUntil: new Date(formData.validUntil!).toISOString(),
+    };
+
     if (editingPromotion) {
-      const response = await updatePromotion(editingPromotion.id, formData);
+      const response = await updatePromotion(editingPromotion.id, {
+        priceCurrent: payload.priceCurrent,
+        validFrom: payload.validFrom,
+        validUntil: payload.validUntil,
+      });
       
       if (response.error) {
         toast({
           title: "Não foi possível atualizar",
-          description: "API não disponível. Tente novamente mais tarde.",
+          description: response.error,
           variant: "destructive",
         });
         return;
@@ -102,7 +196,9 @@ export default function Promotions() {
 
       setPromotions(
         promotions.map((promo) =>
-          promo.id === editingPromotion.id ? { ...promo, ...formData } : promo
+          promo.id === editingPromotion.id 
+            ? { ...promo, ...formData } as Promotion
+            : promo
         )
       );
       toast({
@@ -110,287 +206,304 @@ export default function Promotions() {
         description: "A promoção foi atualizada com sucesso.",
       });
     } else {
-      const response = await createPromotion(formData);
+      const response = await createPromotion(payload);
       
       if (response.error) {
         toast({
           title: "Não foi possível criar",
-          description: "API não disponível. Tente novamente mais tarde.",
+          description: response.error,
           variant: "destructive",
         });
         return;
       }
 
-      const newPromotion: Promotion = (response.data as Promotion) || {
-        id: Date.now().toString(),
-        ...formData as Promotion,
-      };
+      const newPromotion = response.data as Promotion;
       setPromotions([...promotions, newPromotion]);
       toast({
         title: "Promoção criada!",
-        description: "A nova promoção foi adicionada.",
+        description: "A nova promoção foi adicionada ao sistema.",
       });
     }
 
     setIsDialogOpen(false);
   };
 
-  const handleToggle = async (id: string) => {
-    const promo = promotions.find((p) => p.id === id);
-    if (!promo) return;
+  const handleDelete = async () => {
+    if (!deletePromoId) return;
 
-    const response = await togglePromotion(id, !promo.active);
-    
-    if (response.error) {
-      toast({
-        title: "Não foi possível atualizar",
-        description: "API não disponível. Tente novamente mais tarde.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setPromotions(
-      promotions.map((p) =>
-        p.id === id ? { ...p, active: !p.active } : p
-      )
-    );
-
-    toast({
-      title: promo.active ? "Promoção desativada" : "Promoção ativada",
-      description: promo.active
-        ? "A promoção foi congelada e não será mais oferecida."
-        : "A promoção foi ativada e está disponível.",
-    });
-  };
-
-  const handleDelete = async (id: string) => {
-    const response = await deletePromotion(id);
+    const response = await deletePromotion(deletePromoId);
     
     if (response.error) {
       toast({
         title: "Não foi possível remover",
-        description: "API não disponível. Tente novamente mais tarde.",
+        description: response.error,
         variant: "destructive",
       });
+      setDeletePromoId(null);
       return;
     }
 
-    setPromotions(promotions.filter((promo) => promo.id !== id));
+    setPromotions(promotions.filter((promo) => promo.id !== deletePromoId));
     toast({
       title: "Promoção removida",
-      description: "A promoção foi removida do sistema.",
+      description: "A promoção foi removida do sistema e o preço foi restaurado.",
     });
+    setDeletePromoId(null);
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("pt-BR").format(date);
+  const formatDate = (dateString: string) => {
+    return new Intl.DateTimeFormat("pt-BR").format(new Date(dateString));
   };
 
-  const isExpired = (date: Date) => {
-    return date < new Date();
+  const isPromotionActive = (promotion: Promotion) => {
+    const now = new Date();
+    const start = new Date(promotion.validFrom);
+    const end = new Date(promotion.validUntil);
+    return now >= start && now <= end;
   };
+
+  const getDiscount = (item: MenuItem | undefined) => {
+    if (!item) return 0;
+    return ((item.priceReal - formData.priceCurrent!) / item.priceReal) * 100;
+  };
+
+  const availableItems = menuItems.filter(item => {
+    const hasActivePromo = promotions.some(p => p.menuItemId === item.id && isPromotionActive(p));
+    return !hasActivePromo;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Promoções</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Promoção
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>
-                {editingPromotion ? "Editar Promoção" : "Nova Promoção"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingPromotion
-                  ? "Atualize as informações da promoção."
-                  : "Crie uma nova promoção para seus clientes."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
+      {isLoading ? (
+        <LoadingSpinner />
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Promoções</h1>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => handleOpenDialog()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Promoção
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingPromotion ? "Editar Promoção" : "Nova Promoção"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {editingPromotion
+                      ? "Atualize os detalhes da promoção."
+                      : "Crie uma nova promoção aplicando um desconto a um item do menu."}
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="menuItem">Item do Menu *</Label>
+                    <Select
+                  value={formData.menuItemId || ""}
+                  onValueChange={(value) => setFormData({ ...formData, menuItemId: value })}
+                  disabled={!!editingPromotion}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um item" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(editingPromotion ? menuItems : availableItems).map((item) => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.name} - € {item.priceReal.toFixed(2)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {getSelectedItem() && (
+                <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+                  <div className="space-y-1 text-sm">
+                    <p className="font-medium">{getSelectedItem()?.name}</p>
+                    <p className="text-muted-foreground">
+                      Preço Real: <span className="font-semibold">€ {getSelectedItem()?.priceReal.toFixed(2)}</span>
+                    </p>
+                    {formData.priceCurrent && formData.priceCurrent < (getSelectedItem()?.priceReal || 0) && (
+                      <>
+                        <p className="text-muted-foreground">
+                          Preço com Desconto: <span className="font-semibold text-primary">€ {formData.priceCurrent.toFixed(2)}</span>
+                        </p>
+                        <p className="text-green-600 font-semibold flex items-center gap-1">
+                          <TrendingDown className="h-4 w-4" />
+                          Desconto: {getDiscount(getSelectedItem()).toFixed(1)}%
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
-                <Label htmlFor="name">Nome *</Label>
+                <Label htmlFor="priceCurrent">Preço com Desconto (€) *</Label>
                 <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  id="priceCurrent"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="29.90"
+                  value={formData.priceCurrent}
+                  onChange={(e) =>
+                    setFormData({ ...formData, priceCurrent: parseFloat(e.target.value) || 0 })
+                  }
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="discount">Desconto *</Label>
-                  <Input
-                    id="discount"
-                    type="number"
-                    value={formData.discount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, discount: parseFloat(e.target.value) })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="discountType">Tipo</Label>
-                  <Select
-                    value={formData.discountType}
-                    onValueChange={(value: "PERCENTAGE" | "FIXED") =>
-                      setFormData({ ...formData, discountType: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="PERCENTAGE">Porcentagem (%)</SelectItem>
-                      <SelectItem value="FIXED">Valor Fixo (R$)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="validFrom">Válido de</Label>
+                  <Label htmlFor="validFrom">Válido de *</Label>
                   <Input
                     id="validFrom"
                     type="date"
-                    value={
-                      formData.validFrom
-                        ? new Date(formData.validFrom).toISOString().split("T")[0]
-                        : ""
-                    }
+                    value={formData.validFrom || ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, validFrom: new Date(e.target.value) })
+                      setFormData({ ...formData, validFrom: e.target.value })
                     }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="validUntil">Válido até</Label>
+                  <Label htmlFor="validUntil">Válido até *</Label>
                   <Input
                     id="validUntil"
                     type="date"
-                    value={
-                      formData.validUntil
-                        ? new Date(formData.validUntil).toISOString().split("T")[0]
-                        : ""
-                    }
+                    value={formData.validUntil || ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, validUntil: new Date(e.target.value) })
+                      setFormData({ ...formData, validUntil: e.target.value })
                     }
                   />
                 </div>
               </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="active">Ativa</Label>
-                <Switch
-                  id="active"
-                  checked={formData.active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
-                />
-              </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave}>Salvar</Button>
+              <Button onClick={handleSave}>
+                {editingPromotion ? "Atualizar" : "Criar"} Promoção
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {promotions.length > 0 ? (
-          promotions.map((promotion) => {
-            const expired = isExpired(promotion.validUntil);
+      {promotions.length > 0 ? (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {promotions.map((promotion) => {
+            const item = menuItems.find(i => i.id === promotion.menuItemId);
+            const isActive = isPromotionActive(promotion);
+            const discount = item ? ((item.priceReal - promotion.priceCurrent) / item.priceReal) * 100 : 0;
+
             return (
-            <Card key={promotion.id} className={expired ? "opacity-60" : ""}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{promotion.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {promotion.description}
+              <Card 
+                key={promotion.id} 
+                className={`overflow-hidden transition-all ${!isActive ? "opacity-60" : ""}`}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base truncate">{item?.name || "Item desconhecido"}</CardTitle>
+                      {!isActive && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(promotion.validUntil) < new Date() ? "Expirada" : "Não iniciada"}
+                        </p>
+                      )}
+                    </div>
+                    {isActive && (
+                      <div className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold flex-shrink-0">
+                        Ativa
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm text-muted-foreground">Preço original</span>
+                      <span className="text-sm line-through text-muted-foreground">
+                        € {item?.priceReal.toFixed(2) || "0.00"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-sm text-muted-foreground">Preço promocional</span>
+                      <span className="font-semibold text-lg text-primary">
+                        € {promotion.priceCurrent.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded-lg bg-green-50 border border-green-200">
+                    <p className="text-center font-bold text-green-700 text-lg">
+                      -{discount.toFixed(1)}%
                     </p>
                   </div>
-                  <div className="flex gap-2">
+
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div className="flex justify-between">
+                      <span>De:</span>
+                      <span className="font-medium">{formatDate(promotion.validFrom)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Até:</span>
+                      <span className="font-medium">{formatDate(promotion.validUntil)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-border">
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleOpenDialog(promotion)}
+                      className="flex-1"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Editar
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(promotion.id)}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeletePromoId(promotion.id)}
+                      className="flex-1 text-destructive hover:text-destructive"
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remover
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-primary">
-                    {promotion.discountType === "PERCENTAGE"
-                      ? `${promotion.discount}%`
-                      : `R$ ${promotion.discount.toFixed(2)}`}
-                  </span>
-                  <Switch
-                    checked={promotion.active}
-                    onCheckedChange={() => handleToggle(promotion.id)}
-                    disabled={expired}
-                  />
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    {formatDate(promotion.validFrom)} até {formatDate(promotion.validUntil)}
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  {promotion.active && !expired && (
-                    <span className="px-2 py-1 text-xs bg-green-500/10 text-green-600 border border-green-500/20 rounded-full">
-                      Ativa
-                    </span>
-                  )}
-                  {!promotion.active && (
-                    <span className="px-2 py-1 text-xs bg-gray-500/10 text-gray-600 border border-gray-500/20 rounded-full">
-                      Congelada
-                    </span>
-                  )}
-                  {expired && (
-                    <span className="px-2 py-1 text-xs bg-destructive/10 text-destructive border border-destructive/20 rounded-full">
-                      Expirada
-                    </span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })
-        ) : (
-          <Card className="md:col-span-2">
-            <CardContent className="py-12 text-center text-muted-foreground">
-              Nenhuma promoção cadastrada. Clique em "Nova Promoção" para adicionar.
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Nenhuma promoção ativa. Clique em "Nova Promoção" para começar.
+          </CardContent>
+        </Card>
+      )}
+
+      <AlertDialog open={!!deletePromoId} onOpenChange={(open) => !open && setDeletePromoId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover Promoção</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover essa promoção? O preço do item será restaurado para o valor original.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletePromoId(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive">Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+        </>
+      )}
     </div>
   );
 }

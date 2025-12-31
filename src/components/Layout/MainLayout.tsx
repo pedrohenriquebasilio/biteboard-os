@@ -18,7 +18,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Pedidos", href: "/orders", icon: Package },
   { name: "Conversas", href: "/conversations", icon: MessageSquare },
-  { name: "Cardápio", href: "/menu", icon: UtensilsCrossed },
+  { name: "Menu", href: "/menu", icon: UtensilsCrossed },
   { name: "Promoções", href: "/promotions", icon: Tag },
   { name: "Financeiro", href: "/financial", icon: DollarSign },
 ];
@@ -52,7 +52,7 @@ export default function MainLayout() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-border">
-            <h1 className="text-xl font-bold text-primary">RestaurantOS</h1>
+            <h1 className="text-xl font-bold text-primary font-unbounded">Takeaway</h1>
             <Button
               variant="ghost"
               size="icon"
@@ -72,10 +72,10 @@ export default function MainLayout() {
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:rounded-2xl hover:shadow-md hover:scale-[1.02]"
                   )}
                   onClick={() => setSidebarOpen(false)}
                 >

@@ -6,7 +6,7 @@ export const initWebSocket = () => {
   const WS_URL = import.meta.env.VITE_WS_URL;
   
   // Não conectar se a URL não estiver configurada
-  if (!WS_URL || WS_URL === 'WEBSOCKET_HERE') {
+  if (!WS_URL) {
     console.warn('⚠️ [WebSocket] URL não configurada. Configure VITE_WS_URL no arquivo .env');
     return null;
   }

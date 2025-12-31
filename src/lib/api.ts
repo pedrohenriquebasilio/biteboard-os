@@ -111,6 +111,10 @@ export async function getDashboardStats() {
   return apiRequest('/dashboard/stats');
 }
 
+export async function getDashboardMetrics() {
+  return apiRequest('/dashboard/metrics');
+}
+
 export async function getRevenueData(params: {
   period: 'daily' | 'weekly' | 'monthly';
   startDate?: string;
@@ -136,11 +140,46 @@ export async function getOrders(filters?: {
   return apiRequest(`/orders${queryParams ? `?${queryParams}` : ''}`);
 }
 
+export async function createOrder(data: {
+  customerName: string;
+  customerPhone: string;
+  items: Array<{
+    menuItemId: string;
+    quantity: number;
+    notes?: string;
+  }>;
+}) {
+  return apiRequest('/orders', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getOrder(orderId: string) {
+  return apiRequest(`/orders/${orderId}`);
+}
+
 export async function updateOrderStatus(orderId: string, status: string) {
   return apiRequest(`/orders/${orderId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
   });
+}
+
+export async function deleteOrder(orderId: string) {
+  return apiRequest(`/orders/${orderId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getOrderStats(params?: {
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const queryParams = params 
+    ? new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined) as [string, string][]).toString() 
+    : '';
+  return apiRequest(`/orders/stats${queryParams ? `?${queryParams}` : ''}`);
 }
 
 // ============= CONVERSATIONS =============
@@ -210,21 +249,41 @@ export async function deleteMenuItem(id: string) {
 
 // ============= PROMOTIONS =============
 
-export async function getPromotions(active?: boolean) {
-  const queryParams = active !== undefined ? `?active=${active}` : '';
-  return apiRequest(`/promotions${queryParams}`);
+export async function getPromotions() {
+  return apiRequest('/promotions');
 }
 
-export async function createPromotion(data: any) {
+export async function getActivePromotions() {
+  return apiRequest('/promotions/active');
+}
+
+export async function getPromotionByMenuItem(menuItemId: string) {
+  return apiRequest(`/promotions/menu-item/${menuItemId}`);
+}
+
+export async function createPromotion(data: {
+  menuItemId: string;
+  priceCurrent: number;
+  validFrom: string;
+  validUntil: string;
+}) {
   return apiRequest('/promotions', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export async function updatePromotion(id: string, data: any) {
+export async function getPromotion(id: string) {
+  return apiRequest(`/promotions/${id}`);
+}
+
+export async function updatePromotion(id: string, data: {
+  priceCurrent?: number;
+  validFrom?: string;
+  validUntil?: string;
+}) {
   return apiRequest(`/promotions/${id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify(data),
   });
 }
@@ -235,24 +294,48 @@ export async function deletePromotion(id: string) {
   });
 }
 
-export async function togglePromotion(id: string, active: boolean) {
-  return apiRequest(`/promotions/${id}/toggle`, {
-    method: 'PATCH',
-    body: JSON.stringify({ active }),
-  });
-}
-
 // ============= FINANCIAL =============
 
-export async function getFinancialSummary(params: {
-  period: 'daily' | 'weekly' | 'monthly';
+export async function getFinancialSummary(params?: {
+  period?: 'daily' | 'weekly' | 'monthly';
   startDate?: string;
   endDate?: string;
 }) {
-  const queryParams = new URLSearchParams(
-    Object.entries(params).filter(([_, v]) => v !== undefined) as [string, string][]
-  ).toString();
-  return apiRequest(`/financial/summary?${queryParams}`);
+  const queryParams = params
+    ? new URLSearchParams(
+        Object.entries(params).filter(([_, v]) => v !== undefined) as [string, string][]
+      ).toString()
+    : '';
+  return apiRequest(`/financial/summary${queryParams ? `?${queryParams}` : ''}`);
+}
+
+export async function getFinancialByPeriod(params?: {
+  period?: 'daily' | 'weekly' | 'monthly';
+  startDate?: string;
+  endDate?: string;
+}) {
+  const queryParams = params
+    ? new URLSearchParams(
+        Object.entries(params).filter(([_, v]) => v !== undefined) as [string, string][]
+      ).toString()
+    : '';
+  return apiRequest(`/financial/by-period${queryParams ? `?${queryParams}` : ''}`);
+}
+
+export async function getFinancialToday() {
+  return apiRequest('/financial/today');
+}
+
+export async function getFinancialMonthlyComparison(params?: {
+  year?: number;
+  month?: number;
+}) {
+  const queryParams = params
+    ? new URLSearchParams(
+        Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
+      ).toString()
+    : '';
+  return apiRequest(`/financial/monthly-comparison${queryParams ? `?${queryParams}` : ''}`);
 }
 
 // ============= WEBSOCKET =============

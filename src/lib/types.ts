@@ -58,27 +58,55 @@ export interface Message {
   conversationId: string;
   text: string;
   sender: "customer" | "server";
-  timestamp: Date;
+  timestamp: string;
   status: "sent" | "delivered" | "read";
+  messageType?: string;
+  whatsappMessageId?: string;
 }
 
 export interface MenuItem {
   id: string;
   name: string;
   description?: string;
-  price: number;
+  priceReal: number;
+  priceCurrent: number;
   category: string;
+  image?: string;
   available: boolean;
-  imageUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface OrderItemDetail {
+  id: string;
+  menuItemId: string;
+  quantity: number;
+  price: number;
+  notes?: string;
+  name: string;
+  menuItem?: MenuItem;
+}
+
+export interface Order {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  items: OrderItemDetail[];
+  total: number;
+  status: "NEW" | "PREPARING" | "READY" | "DELIVERED";
+  createdAt: string;
+  updatedAt: string;
+  deliveryAddress?: string;
 }
 
 export interface Promotion {
   id: string;
-  name: string;
-  description?: string;
-  discount: number;
-  discountType: "PERCENTAGE" | "FIXED";
-  validFrom: Date;
-  validUntil: Date;
+  menuItemId: string;
+  priceCurrent: number;
+  validFrom: string;
+  validUntil: string;
   active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  menuItem?: MenuItem;
 }

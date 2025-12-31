@@ -71,13 +71,13 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md rounded-2xl shadow-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
             <UtensilsCrossed className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-2xl">RestaurantOS</CardTitle>
+            <CardTitle className="text-2xl font-unbounded">Takeaway</CardTitle>
             <CardDescription>
               Entre com suas credenciais para acessar o sistema
             </CardDescription>

@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,44 +7,50 @@
 
 @layer base {
   :root {
-    /* Brand Colors */
-    --primary: 262 83% 58%;
+    /* Brand Colors - Takeaway Design */
+    /* red_pito: #E41E26 - Destaque/Ação */
+    --primary: 357 77% 51%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 262 83% 70%;
+    --primary-glow: 357 77% 61%;
     
     /* Semantic Colors */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --danger: 0 84% 60%;
+    /* red_pito usado para danger também */
+    --danger: 357 77% 51%;
     --danger-foreground: 0 0% 100%;
     
     /* UI Colors */
-    --background: 0 0% 100%;
-    --foreground: 224 71% 4%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
+    /* nude_pito: #F6F3E2 - Fundo/Suporte */
+    --background: 48 40% 93%;
+    /* black_pito: #2C1300 - Primária/Contornos */
+    --foreground: 25 100% 9%;
+    --card: 48 40% 96%;
+    --card-foreground: 25 100% 9%;
+    --popover: 48 40% 96%;
+    --popover-foreground: 25 100% 9%;
     
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 9% 46%;
+    --secondary: 48 25% 88%;
+    --secondary-foreground: 25 100% 9%;
     
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 48 20% 85%;
+    --muted-foreground: 25 60% 25%;
     
-    --accent: 220 14% 96%;
-    --accent-foreground: 224 71% 4%;
+    --accent: 48 30% 90%;
+    --accent-foreground: 25 100% 9%;
     
-    --destructive: 0 84% 60%;
+    --destructive: 357 77% 51%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262 83% 58%;
+    /* black_pito: #2C1300 - Contornos */
+    --border: 25 100% 15%;
+    --input: 25 100% 15%;
+    /* red_pito para ring/focus */
+    --ring: 357 77% 51%;
     
-    --radius: 0.5rem;
+    --radius: 1rem;
     
     /* Status Colors */
     --status-new: 217 91% 60%;
@@ -52,47 +59,50 @@
     --status-delivered: 220 9% 46%;
     
     /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 48 40% 95%;
+    --sidebar-foreground: 25 100% 9%;
+    --sidebar-primary: 25 100% 9%;
+    --sidebar-primary-foreground: 48 40% 96%;
+    --sidebar-accent: 48 30% 90%;
+    --sidebar-accent-foreground: 25 100% 9%;
+    --sidebar-border: 25 100% 15%;
+    --sidebar-ring: 357 77% 51%;
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 0 0% 95%;
-    --card: 224 71% 6%;
-    --card-foreground: 0 0% 95%;
-    --popover: 224 71% 6%;
-    --popover-foreground: 0 0% 95%;
+    /* black_pito: #2C1300 - Fundo escuro */
+    --background: 25 100% 9%;
+    /* nude_pito: #F6F3E2 - Texto claro */
+    --foreground: 48 40% 93%;
+    --card: 25 100% 12%;
+    --card-foreground: 48 40% 93%;
+    --popover: 25 100% 12%;
+    --popover-foreground: 48 40% 93%;
     
-    --primary: 262 83% 58%;
+    /* red_pito: #E41E26 - Destaque */
+    --primary: 357 77% 51%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 215 28% 17%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary: 25 70% 15%;
+    --secondary-foreground: 48 40% 93%;
     
-    --muted: 215 28% 17%;
-    --muted-foreground: 217 11% 65%;
+    --muted: 25 60% 15%;
+    --muted-foreground: 48 25% 70%;
     
-    --accent: 215 28% 17%;
-    --accent-foreground: 0 0% 95%;
+    --accent: 25 70% 18%;
+    --accent-foreground: 48 40% 93%;
     
-    --border: 215 28% 17%;
-    --input: 215 28% 17%;
+    --border: 25 80% 20%;
+    --input: 25 80% 20%;
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 25 100% 10%;
+    --sidebar-foreground: 48 40% 93%;
+    --sidebar-primary: 357 77% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 25 70% 15%;
+    --sidebar-accent-foreground: 48 40% 93%;
+    --sidebar-border: 25 80% 20%;
+    --sidebar-ring: 357 77% 51%;
   }
 }
 
@@ -104,6 +114,10 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', sans-serif;
+  }
+  
+  .font-unbounded {
+    font-family: 'Unbounded', 'Inter', sans-serif;
   }
 }
 
@@ -122,5 +136,24 @@
   
   .status-badge-delivered {
     @apply bg-gray-500/10 text-gray-600 border-gray-500/20;
+  }
+}
+
+@layer components {
+  /* Modern hover effects with rounded corners */
+  .hover-modern {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-modern:hover {
+    @apply rounded-2xl shadow-lg transform scale-[1.02];
+  }
+  
+  .card-modern {
+    @apply rounded-2xl border transition-all duration-300 hover:shadow-xl hover:shadow-primary/5;
+  }
+  
+  .button-modern {
+    @apply rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105;
   }
 }

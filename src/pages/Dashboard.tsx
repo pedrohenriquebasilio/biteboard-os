@@ -1,59 +1,70 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, DollarSign, MessageSquare, Clock } from "lucide-react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { Package, DollarSign, MessageSquare, Clock, AlertCircle, TrendingUp, CheckCircle, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getDashboardStats, getRevenueData, getOrders } from "@/lib/api";
+import { getDashboardStats, getDashboardMetrics, getOrders } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
-import { DashboardStats, RevenueData } from "@/lib/types";
+import { LoadingSpinner } from "@/components/Loading";
+import { DashboardStats, Order } from "@/lib/types";
+
+interface DashboardMetrics {
+  completionRate: number;
+  averageTicket: number;
+  ordersInProgress: number;
+  orderSLA: number; // tempo médio em minutos
+}
+
+interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+  message?: string;
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
 
-      const [statsResponse, revenueResponse, ordersResponse] =
-        await Promise.all([
-          getDashboardStats(),
-          getRevenueData({
-            period: "daily",
-            startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-              .toISOString()
-              .split("T")[0],
-            endDate: new Date().toISOString().split("T")[0],
-          }),
-          getOrders(),
-        ]);
+      const [statsResponse, metricsResponse, ordersResponse] = await Promise.all([
+        getDashboardStats(),
+        getDashboardMetrics(),
+        getOrders(),
+      ]);
 
-      if (
-        statsResponse.error ||
-        revenueResponse.error ||
-        ordersResponse.error
-      ) {
+      if (statsResponse.error) {
         toast({
-          title: "Erro ao carregar dados",
-          description: "Não foi possível carregar os dados do dashboard.",
+          title: "Erro ao carregar estatísticas",
+          description: statsResponse.error,
           variant: "destructive",
         });
+      } else if (statsResponse.data) {
+        console.log('📊 Stats recebidas:', statsResponse.data);
+        // Se os dados vierem com estrutura aninhada data.data, extrair
+        const statsData = (statsResponse.data as any).data || statsResponse.data;
+        setStats(statsData as DashboardStats);
       }
 
-      if (statsResponse.data) setStats(statsResponse.data as DashboardStats);
-      if (revenueResponse.data)
-        setRevenueData(revenueResponse.data as RevenueData[]);
-      if (ordersResponse.data) {
-        const orders = ordersResponse.data as any[];
+      if (metricsResponse.error) {
+        toast({
+          title: "Erro ao carregar métricas",
+          description: metricsResponse.error,
+          variant: "destructive",
+        });
+      } else if (metricsResponse.data) {
+        console.log('📈 Metrics recebidas:', metricsResponse.data);
+        // Se os dados vierem com estrutura aninhada data.data, extrair
+        const metricsData = (metricsResponse.data as any).data || metricsResponse.data;
+        setMetrics(metricsData as DashboardMetrics);
+      }
+
+      if (ordersResponse.error) {
+        console.error("Erro ao carregar pedidos:", ordersResponse.error);
+      } else if (ordersResponse.data && Array.isArray(ordersResponse.data)) {
+        const orders = ordersResponse.data as Order[];
         setRecentOrders(orders.slice(0, 5));
       }
 
@@ -84,15 +95,13 @@ export default function Dashboard() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">Carregando...</div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!stats) {
     return (
-      <div className="flex items-center justify-center h-96">
-        Erro ao carregar dados
+      <div className="flex items-center justify-center h-96 text-muted-foreground">
+        Erro ao carregar dados do dashboard
       </div>
     );
   }
@@ -100,31 +109,30 @@ export default function Dashboard() {
   const statCards = [
     {
       title: "Pedidos Hoje",
-      value: stats.todayOrders,
+      value: stats.todayOrders || 0,
       icon: Package,
-      description: `${stats.activeOrders} ativos`,
+      description: `${stats.activeOrders || 0} ativos`,
     },
     {
       title: "Faturamento Hoje",
-      value: `R$ ${stats.todayRevenue?.toFixed(2) || "0.00"}`,
+      value: `€ ${((stats.todayRevenue || 0) as number).toFixed(2)}`,
       icon: DollarSign,
-      description: "Meta: R$ 2.000,00",
+      description: "Meta: € 2.000,00",
     },
     {
       title: "Conversas Ativas",
-      value: stats.activeConversations,
+      value: stats.activeConversations || 0,
       icon: MessageSquare,
       description: "WhatsApp conectado",
     },
     {
       title: "Em Preparo",
-      value: stats.ordersInProgress,
+      value: stats.ordersInProgress || 0,
       icon: Clock,
-      description: `${stats.ordersReady} prontos`,
+      description: `${stats.ordersReady || 0} prontos`,
     },
   ];
 
-  const hasRevenueData = Array.isArray(revenueData) && revenueData.length > 0;
   const hasOrders = Array.isArray(recentOrders) && recentOrders.length > 0;
 
   return (
@@ -132,7 +140,7 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat) => (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
@@ -149,52 +157,71 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Revenue Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Faturamento dos Últimos 7 Dias</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {hasRevenueData ? (
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={revenueData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    className="stroke-border"
-                  />
-                  <XAxis
-                    dataKey="date"
-                    className="text-xs text-muted-foreground"
-                  />
-                  <YAxis className="text-xs text-muted-foreground" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={{ fill: "hsl(var(--primary))" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              Nenhum dado de faturamento disponível
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Informações Rápidas */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-[1.02]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Taxa de Conclusão
+            </CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.completionRate || 0}%</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.ordersReady || 0} pedidos prontos
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Ticket Médio
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">€ {(metrics?.averageTicket || 0).toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stats?.todayOrders || 0} pedidos hoje
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              SLA Pedidos
+            </CardTitle>
+            <Zap className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.orderSLA || 0}m</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Tempo médio até pronto
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Atenção Necessária
+            </CardTitle>
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics?.ordersInProgress || 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Pedidos em preparo
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Recent Orders */}
-      <Card>
+      <Card className="rounded-2xl">
         <CardHeader>
           <CardTitle>Pedidos Recentes</CardTitle>
         </CardHeader>
@@ -210,7 +237,7 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3">
                       <p className="font-medium">{order.customerName}</p>
                       <span
-                        className={`px-2 py-1 rounded-full text-xs border ${getStatusBadge(
+                        className={`px-3 py-1 rounded-xl text-xs border transition-all duration-200 ${getStatusBadge(
                           order.status
                         )}`}
                       >
@@ -223,7 +250,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">R$ {order.total.toFixed(2)}</p>
+                    <p className="font-semibold">€ {order.total.toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">
                       {Math.floor(
                         (Date.now() - new Date(order.createdAt).getTime()) /
